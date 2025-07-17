@@ -1,0 +1,12 @@
+{
+  "name": "us-history-map-app",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "packages/*"
+  ],
+  "devDependencies": {
+    "biome": "^0.3.3",
+    "typescript": "^5.8.3"
+  }
+}
