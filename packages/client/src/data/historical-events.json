@@ -1,0 +1,77 @@
+[
+  {
+    "id": "event-1",
+    "title": "Signing of the Declaration of Independence",
+    "description": "The United States declared independence from Great Britain.",
+    "date": "1776-07-04",
+    "location": {
+      "city": "Philadelphia",
+      "state": "PA",
+      "latitude": 39.9526,
+      "longitude": -75.1652
+    },
+    "relatedEventIds": ["event-2"],
+    "tags": ["revolution", "independence"],
+    "people": ["Thomas Jefferson", "John Adams", "Benjamin Franklin"]
+  },
+  {
+    "id": "event-2",
+    "title": "Battle of Yorktown",
+    "description": "The last major battle of the American Revolutionary War.",
+    "date": "1781-10-19",
+    "location": {
+      "city": "Yorktown",
+      "state": "VA",
+      "latitude": 37.2388,
+      "longitude": -76.5097
+    },
+    "relatedEventIds": ["event-1"],
+    "tags": ["revolution", "military"],
+    "people": ["George Washington", "Charles Cornwallis"]
+  },
+  {
+    "id": "event-3",
+    "title": "Assassination of Abraham Lincoln",
+    "description": "President Abraham Lincoln was shot by John Wilkes Booth at Ford's Theatre.",
+    "date": "1865-04-14",
+    "location": {
+      "city": "Washington",
+      "state": "DC",
+      "latitude": 38.8977,
+      "longitude": -77.0365
+    },
+    "relatedEventIds": [],
+    "tags": ["civil war", "presidency"],
+    "people": ["Abraham Lincoln", "John Wilkes Booth"]
+  },
+  {
+    "id": "event-4",
+    "title": "Wright Brothers' First Flight",
+    "description": "Orville and Wilbur Wright achieved the first powered flight.",
+    "date": "1903-12-17",
+    "location": {
+      "city": "Kitty Hawk",
+      "state": "NC",
+      "latitude": 36.0646,
+      "longitude": -75.7050
+    },
+    "relatedEventIds": [],
+    "tags": ["aviation", "innovation"],
+    "people": ["Orville Wright", "Wilbur Wright"]
+  },
+  {
+    "id": "event-5",
+    "title": "March on Washington",
+    "description": "Massive civil rights demonstration where Martin Luther King Jr. delivered his 'I Have a Dream' speech.",
+    "date": "1963-08-28",
+    "location": {
+      "city": "Washington",
+      "state": "DC",
+      "latitude": 38.8893,
+      "longitude": -77.0502
+    },
+    "relatedEventIds": [],
+    "tags": ["civil rights", "speech"],
+    "people": ["Martin Luther King Jr."]
+  }
+]
