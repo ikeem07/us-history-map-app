@@ -66,10 +66,6 @@ button:focus-visible {
 }
 
 /* MapLibre Styles */
-.maplibregl-popup-content {
-  max-width: 500px;
-}
-
 .maplibregl-popup-close-button {
   display: block !important;
   position: absolute !important;
