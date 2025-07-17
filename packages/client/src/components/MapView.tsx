@@ -2,7 +2,7 @@ import React from 'react';
 import { Map, Marker, Source, Layer } from 'react-map-gl/maplibre';
 import 'maplibre-gl/dist/maplibre-gl.css';
 
-import events from '../data/historical-events.json' with { type: 'json' };
+import events from '../data/historical-events.json';
 import type { HistoricalEvent } from '../types/HistoricalEvent';
 import type { Feature, FeatureCollection, LineString } from 'geojson';
 
