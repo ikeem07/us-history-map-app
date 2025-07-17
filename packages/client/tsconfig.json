@@ -3,11 +3,10 @@
   "compilerOptions": {
     "outDir": "dist",
     "rootDir": "src",
-    "module": "NodeNext",
-    "target": "ES2022",
-    "strict": true,
-    "moduleResolution": "NodeNext",
-    "esModuleInterop": true
+    "module": "ESNext",                 // ✅ for Vite bundler
+    "moduleResolution": "bundler",     // ✅ allows extensionless imports like './App'
+    "jsx": "react-jsx",                // ✅ required for React 17+
+    "lib": ["DOM", "ES2022"]           // ✅ enables DOM & modern JS APIs
   },
   "include": ["src/**/*.ts", "src/**/*.tsx"]
 }
