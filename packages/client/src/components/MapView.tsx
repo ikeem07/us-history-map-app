@@ -1,6 +1,6 @@
 import React from 'react';
-import { Map, Marker, Source, Layer } from 'react-map-gl/maplibre';
-import 'maplibre-gl/dist/maplibre-gl.css';
+import { Map, Marker, Source, Layer, Popup } from 'react-map-gl/maplibre';
+import { Card, Typography } from 'antd';
 
 import events from '../data/historical-events.json';
 import type { HistoricalEvent } from '../types/HistoricalEvent';
@@ -9,6 +9,10 @@ import type { Feature, FeatureCollection, LineString } from 'geojson';
 const historicalEvents = events as HistoricalEvent[];
 
 const MapView: React.FC = () => {
+  const [selectedEvent, setSelectedEvent] = React.useState<HistoricalEvent | null>(null);
+
+  const { Title, Paragraph, Text } = Typography;
+
   const connectionFeatures: Feature<LineString>[] =
     historicalEvents.flatMap((event) =>
       event.relatedEventIds
@@ -56,6 +60,13 @@ const MapView: React.FC = () => {
         >
           <div
             title={event.title}
+            onClick={() => {
+              if (selectedEvent?.id === event.id) {
+                setSelectedEvent(null);
+              } else {
+                setSelectedEvent(event)
+              }
+            }}
             style={{
               width: 12,
               height: 12,
@@ -79,6 +90,36 @@ const MapView: React.FC = () => {
           }}
         />
       </Source>
+
+      {/* Popup for selected event */}
+      {selectedEvent && (
+        <Popup
+          latitude={selectedEvent.location.latitude}
+          longitude={selectedEvent.location.longitude}
+          onClose={() => setSelectedEvent(null)}
+          closeButton={true}
+          closeOnClick={false}
+          anchor="top"
+          style={{ maxWidth: 320 }}
+        >
+          <div style={{ minWidth: '100%' }}>
+            <Card 
+              size="small" 
+              style={{ boxShadow: 'none', margin: 0 }}
+              className='custom-ant-card'
+            >
+              <Title level={5} style={{ marginBottom: 8 }}>{selectedEvent.title}</Title>
+              <Paragraph style={{ marginBottom: 8 }}>{selectedEvent.description}</Paragraph>
+              <Text type='secondary'>{selectedEvent.date}</Text>
+              {selectedEvent.people?.length ? (
+                <Paragraph style={{ marginTop: 8 }}>
+                  <Text strong>People:</Text> {selectedEvent.people.join(', ')}
+                </Paragraph>
+              ) : null}
+            </Card>
+          </div>
+        </Popup>
+      )}
     </Map>
   );
 };
