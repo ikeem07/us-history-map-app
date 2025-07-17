@@ -3,7 +3,7 @@ import { Map, Marker, Source, Layer, Popup } from 'react-map-gl/maplibre';
 import { Card, Typography } from 'antd';
 
 import events from '../data/historical-events.json';
-import type { HistoricalEvent } from '../types/HistoricalEvent';
+import type { HistoricalEvent } from '../types/historical-event';
 import type { Feature, FeatureCollection, LineString } from 'geojson';
 
 const historicalEvents = events as HistoricalEvent[];
@@ -100,7 +100,7 @@ const MapView: React.FC = () => {
           closeButton={true}
           closeOnClick={false}
           anchor="top"
-          style={{ minWidth: 320 }}
+          style={{ minWidth: 350 }}
         >
           <div style={{ minWidth: '100%' }}>
             <Card 
@@ -108,9 +108,12 @@ const MapView: React.FC = () => {
               style={{ boxShadow: 'none', margin: 0 }}
               className='custom-ant-card'
             >
-              <Title level={5} style={{ marginBottom: 8 }}>{selectedEvent.title}</Title>
+              <Title level={5} style={{ marginBottom: 8 }}>
+                {selectedEvent.title} 
+                <br />
+                ({selectedEvent.date})
+              </Title>
               <Paragraph style={{ marginBottom: 8 }}>{selectedEvent.description}</Paragraph>
-              <Text type='secondary'>{selectedEvent.date}</Text>
               {selectedEvent.people?.length ? (
                 <Paragraph style={{ marginTop: 8 }}>
                   <Text strong>People:</Text> {selectedEvent.people.join(', ')}
