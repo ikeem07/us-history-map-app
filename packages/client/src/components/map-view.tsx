@@ -13,26 +13,28 @@ const MapView: React.FC = () => {
 
   const { Title, Paragraph, Text } = Typography;
 
-  const connectionFeatures: Feature<LineString>[] =
-    historicalEvents.flatMap((event) =>
-      event.relatedEventIds
-        .map((relatedId): Feature<LineString> | null => {
-          const target = historicalEvents.find((e) => e.id === relatedId);
-          if (!target) return null;
+  const connectionFeatures: Feature<LineString>[] = selectedEvent
+    ? selectedEvent.relatedEventIds
+      .map((relatedId): Feature<LineString> | null => {
+        const target = historicalEvents.find((e) => e.id === relatedId);
+        if (!target) return null;
 
-          return {
-            type: 'Feature',
-            geometry: {
-              type: 'LineString',
-              coordinates: [
-                [event.location.longitude, event.location.latitude],
-                [target.location.longitude, target.location.latitude]
-              ]
-            },
-            properties: {}
-          };
-        })
-  ).filter((f): f is Feature<LineString> => f !== null);
+        return {
+          type: 'Feature',
+          geometry: {
+            type: 'LineString',
+            coordinates: [
+              [selectedEvent.location.longitude, selectedEvent.location.latitude],
+              [target.location.longitude, target.location.latitude]
+            ]
+          },
+          properties: {
+            label: `${selectedEvent.title} ↔ ${target.title}`,
+          }
+        };
+      })
+      .filter((f): f is Feature<LineString> => f !== null)
+    : [];
 
   const connectionData: FeatureCollection<LineString> = {
     type: 'FeatureCollection',
