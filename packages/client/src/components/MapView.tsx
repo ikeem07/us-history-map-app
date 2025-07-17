@@ -100,7 +100,7 @@ const MapView: React.FC = () => {
           closeButton={true}
           closeOnClick={false}
           anchor="top"
-          style={{ maxWidth: 320 }}
+          style={{ minWidth: 320 }}
         >
           <div style={{ minWidth: '100%' }}>
             <Card 
