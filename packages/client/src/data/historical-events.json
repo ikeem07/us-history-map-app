@@ -10,7 +10,12 @@
       "latitude": 39.9526,
       "longitude": -75.1652
     },
-    "relatedEventIds": ["event-2"],
+    "relatedEvents": [
+      {
+        "id": "event-2",
+        "reason": "This event is related to the American Revolutionary War, which includes the Battle of Yorktown."
+      }
+    ],
     "tags": ["revolution", "independence"],
     "people": ["Thomas Jefferson", "John Adams", "Benjamin Franklin"]
   },
@@ -25,7 +30,12 @@
       "latitude": 37.2388,
       "longitude": -76.5097
     },
-    "relatedEventIds": ["event-1"],
+    "relatedEvents": [
+      {
+        "id": "event-1",
+        "reason": "This event is related to the Declaration of Independence, as it was a significant battle in the war for independence."
+      }
+    ],
     "tags": ["revolution", "military"],
     "people": ["George Washington", "Charles Cornwallis"]
   },
@@ -40,7 +50,7 @@
       "latitude": 38.8977,
       "longitude": -77.0365
     },
-    "relatedEventIds": [],
+    "relatedEvents": [],
     "tags": ["civil war", "presidency"],
     "people": ["Abraham Lincoln", "John Wilkes Booth"]
   },
@@ -55,7 +65,7 @@
       "latitude": 36.0646,
       "longitude": -75.7050
     },
-    "relatedEventIds": [],
+    "relatedEvents": [],
     "tags": ["aviation", "innovation"],
     "people": ["Orville Wright", "Wilbur Wright"]
   },
@@ -70,7 +80,7 @@
       "latitude": 38.8893,
       "longitude": -77.0502
     },
-    "relatedEventIds": [],
+    "relatedEvents": [],
     "tags": ["civil rights", "speech"],
     "people": ["Martin Luther King Jr."]
   }

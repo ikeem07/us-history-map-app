@@ -10,12 +10,16 @@ const historicalEvents = events as HistoricalEvent[];
 
 const MapView: React.FC = () => {
   const [selectedEvent, setSelectedEvent] = React.useState<HistoricalEvent | null>(null);
+  const [hoverInfo, setHoverInfo] = React.useState<{
+    lngLat: [number, number];
+    reason: string;
+  } | null>(null);
 
   const { Title, Paragraph, Text } = Typography;
 
   const connectionFeatures: Feature<LineString>[] = selectedEvent
-    ? selectedEvent.relatedEventIds
-      .map((relatedId): Feature<LineString> | null => {
+    ? selectedEvent.relatedEvents
+      .map(({ id: relatedId, reason }): Feature<LineString> | null => {
         const target = historicalEvents.find((e) => e.id === relatedId);
         if (!target) return null;
 
@@ -43,7 +47,8 @@ const MapView: React.FC = () => {
             ]
           },
           properties: {
-            label
+            label,
+            reason
           }
         };
       })
@@ -65,6 +70,19 @@ const MapView: React.FC = () => {
         zoom: 3.5
       }}
       style={{ width: '100%', height: '100vh' }}
+      onMouseMove={(e) => {
+        const features = e.features ?? [];
+        const hovered = features.find((f) => f.layer.id === 'lines');
+        if (hovered?.properties?.reason) {
+          setHoverInfo({
+            lngLat: e.lngLat.toArray() as [number, number],
+            reason: hovered.properties.reason
+          })
+        } else {
+          setHoverInfo(null);
+        }
+      }}
+      interactiveLayerIds={['lines']}
     >
       {/* Markers for each event */}
       {historicalEvents.map((event) => (
@@ -150,6 +168,21 @@ const MapView: React.FC = () => {
               ) : null}
             </Card>
           </div>
+        </Popup>
+      )}
+
+      {/* Hover relationship reason popup */}
+      {hoverInfo && (
+        <Popup
+          longitude={hoverInfo.lngLat[0]}
+          latitude={hoverInfo.lngLat[1]}
+          closeButton={false}
+          closeOnClick={false}
+          offset={10}
+          anchor="top"
+          style={{ minWidth: 200 }}
+        >
+          <Text>{hoverInfo.reason}</Text>
         </Popup>
       )}
     </Map>

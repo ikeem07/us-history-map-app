@@ -1,3 +1,8 @@
+export type RelatedEvent = {
+  id: string;
+  reason: string; // Explanation of how this event is related to the main event
+}
+
 export type HistoricalEvent = {
   id: string;
   title: string;
@@ -9,7 +14,7 @@ export type HistoricalEvent = {
     latitude: number;
     longitude: number;
   };
-  relatedEventIds: string[];
+  relatedEvents: RelatedEvent[]; // Array of related events with reasons
   tags?: string[];
   people?: string[];
 };
