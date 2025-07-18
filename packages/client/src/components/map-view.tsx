@@ -1,5 +1,5 @@
-import React from 'react';
-import { Map, Marker, Source, Layer, Popup } from 'react-map-gl/maplibre';
+import React, { useEffect } from 'react';
+import { Map, Marker, Source, Layer, Popup, MapRef } from 'react-map-gl/maplibre';
 import { Card, Typography } from 'antd';
 
 import events from '../data/historical-events.json';
@@ -15,7 +15,31 @@ const MapView: React.FC = () => {
     reason: string;
   } | null>(null);
 
+  const mapRef = React.useRef<MapRef | null>(null);
+
   const { Title, Paragraph, Text } = Typography;
+
+  useEffect(() => {
+    if (!mapRef.current) return;
+
+    const map = mapRef.current.getMap();
+
+    const enterHandler = () => {
+      map.getCanvas().style.cursor = 'pointer';
+    }
+
+    const leaveHandler = () => {
+      map.getCanvas().style.cursor = '';
+    };
+
+    map.on('mouseenter', 'line-hover-target', enterHandler);
+    map.on('mouseleave', 'line-hover-target', leaveHandler);
+
+    return () => {
+      map.off('mouseenter', 'line-hover-target', enterHandler);
+      map.off('mouseleave', 'line-hover-target', leaveHandler);
+    };
+  }, [selectedEvent]);
 
   const connectionFeatures: Feature<LineString>[] = selectedEvent
     ? selectedEvent.relatedEvents
@@ -62,6 +86,7 @@ const MapView: React.FC = () => {
 
   return (
     <Map
+      ref={mapRef}
       mapLib={import('maplibre-gl')}
       mapStyle="https://basemaps.cartocdn.com/gl/positron-gl-style/style.json"
       initialViewState={{
@@ -72,7 +97,7 @@ const MapView: React.FC = () => {
       style={{ width: '100%', height: '100vh' }}
       onMouseMove={(e) => {
         const features = e.features ?? [];
-        const hovered = features.find((f) => f.layer.id === 'lines');
+        const hovered = features.find((f) => f.layer.id === 'line-hover-target');
         if (hovered?.properties?.reason) {
           setHoverInfo({
             lngLat: e.lngLat.toArray() as [number, number],
@@ -82,7 +107,7 @@ const MapView: React.FC = () => {
           setHoverInfo(null);
         }
       }}
-      interactiveLayerIds={['lines']}
+      interactiveLayerIds={['line-hover-target']}
     >
       {/* Markers for each event */}
       {historicalEvents.map((event) => (
@@ -115,6 +140,17 @@ const MapView: React.FC = () => {
 
       {/* Connection lines between events */}
       <Source id="connections" type="geojson" data={connectionData}>
+        {/* Invisible hover layer */}
+        <Layer
+          id='line-hover-target'
+          type='line'
+          paint={{
+            'line-color': '#000',
+            'line-opacity': 0,
+            'line-width': 10
+          }}
+        />
+        {/* Actual visible line layer */}
         <Layer
           id="lines"
           type="line"
@@ -123,6 +159,7 @@ const MapView: React.FC = () => {
             'line-width': 2
           }}
         />
+        {/* Label layer */}
         <Layer
           id='line-labels'
           type='symbol'
