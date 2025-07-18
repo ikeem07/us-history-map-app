@@ -11,6 +11,19 @@ export type TimelinePanelProps = {
 };
 
 const TimelinePanel: React.FC<TimelinePanelProps> = ({ year, onChange, min = 1700, max = 2000 }) => {
+  const visibleRange = 150;
+  const [windowStart, setWindowStart] = React.useState(min);
+  const windowEnd = Math.min(windowStart + visibleRange, max);
+
+  const shiftWindow = (direction: 'left' | 'right') => {
+    const shiftAmount = 25;
+    if (direction === 'left') {
+      setWindowStart((prev) => Math.max(min, prev - shiftAmount));
+    } else {
+      setWindowStart((prev) => Math.min(max - visibleRange, prev + shiftAmount));
+    }
+  };
+  
   return (
     <div
       style={{
@@ -30,6 +43,7 @@ const TimelinePanel: React.FC<TimelinePanelProps> = ({ year, onChange, min = 170
         height: 64
       }}
     >
+      <Button onClick={() => shiftWindow('left')}>{'←'}</Button>
       <Text strong>Timeline</Text>
       <InputNumber
         min={min}
@@ -41,10 +55,10 @@ const TimelinePanel: React.FC<TimelinePanelProps> = ({ year, onChange, min = 170
         style={{ width: 100 }}
       />
       <Slider
-        min={min}
-        max={max}
+        min={windowStart}
+        max={windowEnd}
         step={1}
-        value={year ?? min}
+        value={year ?? windowStart}
         onChange={onChange}
         marks={{
           1700: '1700',
@@ -63,6 +77,7 @@ const TimelinePanel: React.FC<TimelinePanelProps> = ({ year, onChange, min = 170
         }}
         style={{ flex: 1 }}
       />
+      <Button onClick={() => shiftWindow('right')}>{'→'}</Button>
       <Button onClick={() => onChange(null)}>Clear</Button>
     </div>
   );
