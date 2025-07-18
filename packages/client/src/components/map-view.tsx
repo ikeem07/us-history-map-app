@@ -120,7 +120,7 @@ const MapView: React.FC = () => {
         interactiveLayerIds={['line-hover-target']}
       >
         {/* Markers for each event */}
-        {historicalEvents.map((event) => (
+        {visibleEvents.map((event) => (
           <Marker
             key={event.id}
             latitude={event.location.latitude}
