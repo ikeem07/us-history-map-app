@@ -1,10 +1,12 @@
-import React, { useEffect } from 'react';
+import React, { act, useEffect } from 'react';
 import { Map, Marker, Source, Layer, Popup, MapRef } from 'react-map-gl/maplibre';
-import { Card, Typography } from 'antd';
+import { Card, Typography, Slider } from 'antd';
+import type { Feature, FeatureCollection, LineString } from 'geojson';
 
 import events from '../data/historical-events.json';
+import TimelinePanel from './timeline-panel';
 import type { HistoricalEvent } from '../types/historical-event';
-import type { Feature, FeatureCollection, LineString } from 'geojson';
+
 
 const historicalEvents = events as HistoricalEvent[];
 
@@ -14,6 +16,7 @@ const MapView: React.FC = () => {
     lngLat: [number, number];
     reason: string;
   } | null>(null);
+  const [activeYear, setActiveYear] = React.useState<number>(1776);
 
   const mapRef = React.useRef<MapRef | null>(null);
 
@@ -41,10 +44,14 @@ const MapView: React.FC = () => {
     };
   }, [selectedEvent]);
 
+  const visibleEvents = historicalEvents.filter(event => 
+    new Date(event.date).getFullYear() === activeYear
+  );
+
   const connectionFeatures: Feature<LineString>[] = selectedEvent
     ? selectedEvent.relatedEvents
       .map(({ id: relatedId, reason }): Feature<LineString> | null => {
-        const target = historicalEvents.find((e) => e.id === relatedId);
+        const target = visibleEvents.find((e) => e.id === relatedId);
         if (!target) return null;
 
         const [lng1, lat1] = [selectedEvent.location.longitude, selectedEvent.location.latitude];
@@ -85,144 +92,152 @@ const MapView: React.FC = () => {
   };
 
   return (
-    <Map
-      ref={mapRef}
-      mapLib={import('maplibre-gl')}
-      mapStyle="https://basemaps.cartocdn.com/gl/positron-gl-style/style.json"
-      initialViewState={{
-        latitude: 39.8283,
-        longitude: -98.5795,
-        zoom: 3.5
-      }}
-      style={{ width: '100%', height: '100vh' }}
-      onMouseMove={(e) => {
-        const features = e.features ?? [];
-        const hovered = features.find((f) => f.layer.id === 'line-hover-target');
-        if (hovered?.properties?.reason) {
-          setHoverInfo({
-            lngLat: e.lngLat.toArray() as [number, number],
-            reason: hovered.properties.reason
-          })
-        } else {
-          setHoverInfo(null);
-        }
-      }}
-      interactiveLayerIds={['line-hover-target']}
-    >
-      {/* Markers for each event */}
-      {historicalEvents.map((event) => (
-        <Marker
-          key={event.id}
-          latitude={event.location.latitude}
-          longitude={event.location.longitude}
-          anchor="bottom"
-        >
-          <div
-            title={event.title}
-            onClick={() => {
-              if (selectedEvent?.id === event.id) {
-                setSelectedEvent(null);
-              } else {
-                setSelectedEvent(event)
-              }
-            }}
-            style={{
-              width: 12,
-              height: 12,
-              borderRadius: '50%',
-              backgroundColor: 'red',
-              cursor: 'pointer',
-              border: '2px solid white'
+    <>
+      <Map
+        ref={mapRef}
+        mapLib={import('maplibre-gl')}
+        mapStyle="https://basemaps.cartocdn.com/gl/positron-gl-style/style.json"
+        initialViewState={{
+          latitude: 39.8283,
+          longitude: -98.5795,
+          zoom: 3.5
+        }}
+        style={{ width: '100%', height: '100vh' }}
+        onMouseMove={(e) => {
+          const features = e.features ?? [];
+          const hovered = features.find((f) => f.layer.id === 'line-hover-target');
+          if (hovered?.properties?.reason) {
+            setHoverInfo({
+              lngLat: e.lngLat.toArray() as [number, number],
+              reason: hovered.properties.reason
+            })
+          } else {
+            setHoverInfo(null);
+          }
+        }}
+        interactiveLayerIds={['line-hover-target']}
+      >
+        {/* Markers for each event */}
+        {historicalEvents.map((event) => (
+          <Marker
+            key={event.id}
+            latitude={event.location.latitude}
+            longitude={event.location.longitude}
+            anchor="bottom"
+          >
+            <div
+              title={event.title}
+              onClick={() => {
+                if (selectedEvent?.id === event.id) {
+                  setSelectedEvent(null);
+                } else {
+                  setSelectedEvent(event)
+                }
+              }}
+              style={{
+                width: 12,
+                height: 12,
+                borderRadius: '50%',
+                backgroundColor: 'red',
+                cursor: 'pointer',
+                border: '2px solid white'
+              }}
+            />
+          </Marker>
+        ))}
+
+        {/* Connection lines between events */}
+        <Source id="connections" type="geojson" data={connectionData}>
+          {/* Invisible hover layer */}
+          <Layer
+            id='line-hover-target'
+            type='line'
+            paint={{
+              'line-color': '#000',
+              'line-opacity': 0,
+              'line-width': 10
             }}
           />
-        </Marker>
-      ))}
+          {/* Actual visible line layer */}
+          <Layer
+            id="lines"
+            type="line"
+            paint={{
+              'line-color': '#333',
+              'line-width': 2
+            }}
+          />
+          {/* Label layer */}
+          <Layer
+            id='line-labels'
+            type='symbol'
+            layout={{
+              'symbol-placement': 'line-center',
+              'text-field': ['get', 'label'],
+              'text-size': 13,
+              'text-anchor': 'top'
+            }}
+            paint={{
+              'text-color': 'rgba(12, 107, 3, 1)'
+            }}
+          />
+        </Source>
 
-      {/* Connection lines between events */}
-      <Source id="connections" type="geojson" data={connectionData}>
-        {/* Invisible hover layer */}
-        <Layer
-          id='line-hover-target'
-          type='line'
-          paint={{
-            'line-color': '#000',
-            'line-opacity': 0,
-            'line-width': 10
-          }}
-        />
-        {/* Actual visible line layer */}
-        <Layer
-          id="lines"
-          type="line"
-          paint={{
-            'line-color': '#333',
-            'line-width': 2
-          }}
-        />
-        {/* Label layer */}
-        <Layer
-          id='line-labels'
-          type='symbol'
-          layout={{
-            'symbol-placement': 'line-center',
-            'text-field': ['get', 'label'],
-            'text-size': 13,
-            'text-anchor': 'top'
-          }}
-          paint={{
-            'text-color': 'rgba(12, 107, 3, 1)'
-          }}
-        />
-      </Source>
+        {/* Popup for selected event */}
+        {selectedEvent && (
+          <Popup
+            latitude={selectedEvent.location.latitude}
+            longitude={selectedEvent.location.longitude}
+            onClose={() => setSelectedEvent(null)}
+            closeButton={true}
+            closeOnClick={false}
+            anchor="top"
+            style={{ minWidth: 350 }}
+          >
+            <div style={{ minWidth: '100%' }}>
+              <Card 
+                size="small" 
+                style={{ boxShadow: 'none', margin: 0 }}
+                className='custom-ant-card'
+              >
+                <Title level={5} style={{ marginBottom: 8 }}>
+                  {selectedEvent.title} 
+                  <br />
+                  ({selectedEvent.date})
+                </Title>
+                <Paragraph style={{ marginBottom: 8 }}>{selectedEvent.description}</Paragraph>
+                {selectedEvent.people?.length ? (
+                  <Paragraph style={{ marginTop: 8 }}>
+                    <Text strong>People:</Text> {selectedEvent.people.join(', ')}
+                  </Paragraph>
+                ) : null}
+              </Card>
+            </div>
+          </Popup>
+        )}
 
-      {/* Popup for selected event */}
-      {selectedEvent && (
-        <Popup
-          latitude={selectedEvent.location.latitude}
-          longitude={selectedEvent.location.longitude}
-          onClose={() => setSelectedEvent(null)}
-          closeButton={true}
-          closeOnClick={false}
-          anchor="top"
-          style={{ minWidth: 350 }}
-        >
-          <div style={{ minWidth: '100%' }}>
-            <Card 
-              size="small" 
-              style={{ boxShadow: 'none', margin: 0 }}
-              className='custom-ant-card'
-            >
-              <Title level={5} style={{ marginBottom: 8 }}>
-                {selectedEvent.title} 
-                <br />
-                ({selectedEvent.date})
-              </Title>
-              <Paragraph style={{ marginBottom: 8 }}>{selectedEvent.description}</Paragraph>
-              {selectedEvent.people?.length ? (
-                <Paragraph style={{ marginTop: 8 }}>
-                  <Text strong>People:</Text> {selectedEvent.people.join(', ')}
-                </Paragraph>
-              ) : null}
-            </Card>
-          </div>
-        </Popup>
-      )}
-
-      {/* Hover relationship reason popup */}
-      {hoverInfo && (
-        <Popup
-          longitude={hoverInfo.lngLat[0]}
-          latitude={hoverInfo.lngLat[1]}
-          closeButton={false}
-          closeOnClick={false}
-          offset={10}
-          anchor="top"
-          style={{ minWidth: 200 }}
-        >
-          <Text>{hoverInfo.reason}</Text>
-        </Popup>
-      )}
-    </Map>
+        {/* Hover relationship reason popup */}
+        {hoverInfo && (
+          <Popup
+            longitude={hoverInfo.lngLat[0]}
+            latitude={hoverInfo.lngLat[1]}
+            closeButton={false}
+            closeOnClick={false}
+            offset={10}
+            anchor="top"
+            style={{ minWidth: 200 }}
+          >
+            <Text>{hoverInfo.reason}</Text>
+          </Popup>
+        )}
+      </Map>
+      <TimelinePanel
+        year={activeYear}
+        onChange={setActiveYear}
+        min={1700}
+        max={2000}
+      />
+    </>
   );
 };
 
