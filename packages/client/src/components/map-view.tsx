@@ -19,17 +19,31 @@ const MapView: React.FC = () => {
         const target = historicalEvents.find((e) => e.id === relatedId);
         if (!target) return null;
 
+        const [lng1, lat1] = [selectedEvent.location.longitude, selectedEvent.location.latitude];
+        const [lng2, lat2] = [target.location.longitude, target.location.latitude];
+
+        let label = '';
+        if (lng1 < lng2) {
+          label = `${selectedEvent.title} <-> ${target.title}`;
+        } else if (lng1 > lng2) {
+          label = `${target.title} <-> ${selectedEvent.title}`;
+        } else if (lat1 < lat2) {
+          label = `${selectedEvent.title} <-> ${target.title}`;
+        } else {
+          label = `${target.title} <-> ${selectedEvent.title}`;
+        }
+
         return {
           type: 'Feature',
           geometry: {
             type: 'LineString',
             coordinates: [
-              [selectedEvent.location.longitude, selectedEvent.location.latitude],
-              [target.location.longitude, target.location.latitude]
+              [lng1, lat1],
+              [lng2, lat2]
             ]
           },
           properties: {
-            label: `${selectedEvent.title} ↔ ${target.title}`,
+            label
           }
         };
       })
@@ -89,6 +103,19 @@ const MapView: React.FC = () => {
           paint={{
             'line-color': '#333',
             'line-width': 2
+          }}
+        />
+        <Layer
+          id='line-labels'
+          type='symbol'
+          layout={{
+            'symbol-placement': 'line-center',
+            'text-field': ['get', 'label'],
+            'text-size': 13,
+            'text-anchor': 'top'
+          }}
+          paint={{
+            'text-color': 'rgba(12, 107, 3, 1)'
           }}
         />
       </Source>
