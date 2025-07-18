@@ -54,6 +54,13 @@ const TimelinePanel: React.FC<TimelinePanelProps> = ({ year, onChange, min = 170
     };
   }, [isPlaying, windowStart, windowEnd, year, onChange]);
 
+  useEffect(() => {
+    if (year !== null && (year < windowStart || year > windowEnd)) {
+      const newStart = Math.max(min, Math.min(year, max - visibleRange));
+      setWindowStart(newStart);
+    }
+  }, [year, windowStart, windowEnd, min, max]);
+
   // Generate dynamic marks for visible range
   const marks: Record<number, string> = {};
   for (let y = windowStart; y <= windowEnd; y += 10) {
