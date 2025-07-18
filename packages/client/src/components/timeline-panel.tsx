@@ -106,7 +106,10 @@ const TimelinePanel: React.FC<TimelinePanelProps> = ({ year, onChange, min = 170
         style={{ flex: 1 }}
       />
       <Button onClick={() => shiftWindow('right')}>{'→'}</Button>
-      <Button onClick={() => onChange(null)}>Clear</Button>
+      <Button onClick={() => {
+        setIsPlaying(false);
+        onChange(null);
+      }}>Clear</Button>
       <Button onClick={togglePlay}>{isPlaying ? 'Pause' : 'Play'}</Button>
     </div>
   );
