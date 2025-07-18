@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Slider, InputNumber, Typography, Button } from 'antd';
 
 const { Text } = Typography;
@@ -12,8 +12,11 @@ export type TimelinePanelProps = {
 
 const TimelinePanel: React.FC<TimelinePanelProps> = ({ year, onChange, min = 1700, max = 2000 }) => {
   const visibleRange = 150;
-  const [windowStart, setWindowStart] = React.useState(min);
+  const [windowStart, setWindowStart] = useState(min);
   const windowEnd = Math.min(windowStart + visibleRange, max);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [playbackYear, setPlaybackYear] = useState<number | null>(null);
+  const playRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const shiftWindow = (direction: 'left' | 'right') => {
     const shiftAmount = 25;
@@ -23,7 +26,40 @@ const TimelinePanel: React.FC<TimelinePanelProps> = ({ year, onChange, min = 170
       setWindowStart((prev) => Math.min(max - visibleRange, prev + shiftAmount));
     }
   };
-  
+
+  const togglePlay = () => {
+    setIsPlaying((prev) => !prev);
+  };
+
+  useEffect(() => {
+    if (isPlaying) {
+      playRef.current = setInterval(() => {
+        setPlaybackYear((prev) => {
+          const current = prev ?? year ?? windowStart;
+          const next = current + 1;
+          if (next > windowEnd) {
+            setIsPlaying(false);
+            return current;
+          } else {
+            onChange(next);
+            return next;
+          }
+        });
+      }, 1000);
+    } else {
+      if (playRef.current) clearInterval(playRef.current);
+    }
+    return () => {
+      if (playRef.current) clearInterval(playRef.current);
+    };
+  }, [isPlaying, windowStart, windowEnd, year, onChange]);
+
+  // Generate dynamic marks for visible range
+  const marks: Record<number, string> = {};
+  for (let y = windowStart; y <= windowEnd; y += 10) {
+    marks[y] = `${y}`;
+  }
+
   return (
     <div
       style={{
@@ -44,13 +80,16 @@ const TimelinePanel: React.FC<TimelinePanelProps> = ({ year, onChange, min = 170
       }}
     >
       <Button onClick={() => shiftWindow('left')}>{'←'}</Button>
-      <Text strong>Timeline</Text>
+      <Text strong>Year:</Text>
       <InputNumber
         min={min}
         max={max}
         value={year ?? undefined}
         onChange={(value) => {
-          if (typeof value === 'number') onChange(value);
+          if (typeof value === 'number') {
+            setPlaybackYear(null);
+            onChange(value);
+          }
         }}
         style={{ width: 100 }}
       />
@@ -59,26 +98,16 @@ const TimelinePanel: React.FC<TimelinePanelProps> = ({ year, onChange, min = 170
         max={windowEnd}
         step={1}
         value={year ?? windowStart}
-        onChange={onChange}
-        marks={{
-          1700: '1700',
-          1770: '1770',
-          1780: '1780',
-          1790: '1790',
-          1800: '1800',
-          1810: '1810',
-          1820: '1820',
-          1830: '1830',
-          1840: '1840',
-          1850: '1850',
-          1860: '1860',
-          1963: '1963',
-          2000: '2000'
+        onChange={(value) => {
+          setPlaybackYear(null);
+          onChange(value);
         }}
+        marks={marks}
         style={{ flex: 1 }}
       />
       <Button onClick={() => shiftWindow('right')}>{'→'}</Button>
       <Button onClick={() => onChange(null)}>Clear</Button>
+      <Button onClick={togglePlay}>{isPlaying ? 'Pause' : 'Play'}</Button>
     </div>
   );
 };
