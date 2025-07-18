@@ -16,7 +16,7 @@ const MapView: React.FC = () => {
     lngLat: [number, number];
     reason: string;
   } | null>(null);
-  const [activeYear, setActiveYear] = React.useState<number>(1776);
+  const [activeYear, setActiveYear] = React.useState<number | null>(1776);
 
   const mapRef = React.useRef<MapRef | null>(null);
 
@@ -44,9 +44,11 @@ const MapView: React.FC = () => {
     };
   }, [selectedEvent]);
 
-  const visibleEvents = historicalEvents.filter(event => 
-    new Date(event.date).getFullYear() === activeYear
-  );
+  const visibleEvents = activeYear
+    ? historicalEvents.filter(event => 
+        new Date(event.date).getFullYear() === activeYear
+      )
+    : historicalEvents;
 
   const connectionFeatures: Feature<LineString>[] = selectedEvent
     ? selectedEvent.relatedEvents

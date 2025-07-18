@@ -1,13 +1,13 @@
 import React from 'react';
-import { Slider, InputNumber, Typography } from 'antd';
+import { Slider, InputNumber, Typography, Button } from 'antd';
 
 const { Text } = Typography;
 
 export type TimelinePanelProps = {
-  year: number;
+  year: number | null;
   min?: number;
   max?: number;
-  onChange: (newYear: number) => void;
+  onChange: (newYear: number | null) => void;
 };
 
 const TimelinePanel: React.FC<TimelinePanelProps> = ({ year, onChange, min = 1700, max = 2000 }) => {
@@ -34,7 +34,7 @@ const TimelinePanel: React.FC<TimelinePanelProps> = ({ year, onChange, min = 170
       <InputNumber
         min={min}
         max={max}
-        value={year}
+        value={year ?? undefined}
         onChange={(value) => {
           if (typeof value === 'number') onChange(value);
         }}
@@ -44,7 +44,7 @@ const TimelinePanel: React.FC<TimelinePanelProps> = ({ year, onChange, min = 170
         min={min}
         max={max}
         step={1}
-        value={year}
+        value={year ?? min}
         onChange={onChange}
         marks={{
           1700: '1700',
@@ -63,6 +63,7 @@ const TimelinePanel: React.FC<TimelinePanelProps> = ({ year, onChange, min = 170
         }}
         style={{ flex: 1 }}
       />
+      <Button onClick={() => onChange(null)}>Clear</Button>
     </div>
   );
 };
