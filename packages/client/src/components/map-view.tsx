@@ -44,11 +44,25 @@ const MapView: React.FC = () => {
     };
   }, [selectedEvent]);
 
-  const visibleEvents = activeYear
-    ? historicalEvents.filter(event => 
-        new Date(event.date).getFullYear() === activeYear
-      )
-    : historicalEvents;
+  const visibleEvents = React.useMemo(() => {
+    const base = activeYear
+      ? historicalEvents.filter(e => new Date(e.date).getFullYear() === activeYear)
+      : historicalEvents;
+    
+    if (!selectedEvent) return base;
+
+    const relatedIds = new Set(selectedEvent.relatedEvents.map(r => r.id));
+    const relatedOnly = historicalEvents.filter(e => relatedIds.has(e.id));
+
+    // Add any related events not already in base
+    const merged = [...base];
+    for (const e of relatedOnly) {
+      if (!base.some(b => b.id === e.id)) {
+        merged.push(e);
+      }
+    }
+    return merged;
+  }, [activeYear, selectedEvent])
 
   const connectionFeatures: Feature<LineString>[] = selectedEvent
     ? selectedEvent.relatedEvents
