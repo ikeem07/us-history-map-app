@@ -1,5 +1,5 @@
 import React, { act, useEffect } from 'react';
-import { Map, Marker, Source, Layer, Popup, MapRef } from 'react-map-gl/maplibre';
+import { Map as LibreMap, Marker, Source, Layer, Popup, MapRef } from 'react-map-gl/maplibre';
 import { Card, Typography, Slider } from 'antd';
 import type { Feature, FeatureCollection, LineString } from 'geojson';
 
@@ -45,23 +45,29 @@ const MapView: React.FC = () => {
   }, [selectedEvent]);
 
   const visibleEvents = React.useMemo(() => {
-    const base = activeYear
-      ? historicalEvents.filter(e => new Date(e.date).getFullYear() === activeYear)
-      : historicalEvents;
+    const base = 
+      activeYear != null
+        ? historicalEvents.filter(
+          (e) => new Date(e.date).getFullYear() === activeYear
+        )
+        : historicalEvents;
     
-    if (!selectedEvent) return base;
+    const allVisible = new Map<string, HistoricalEvent>();
+    for (const event of base) {
+      allVisible.set(event.id, event);
+    }
 
-    const relatedIds = new Set(selectedEvent.relatedEvents.map(r => r.id));
-    const relatedOnly = historicalEvents.filter(e => relatedIds.has(e.id));
-
-    // Add any related events not already in base
-    const merged = [...base];
-    for (const e of relatedOnly) {
-      if (!base.some(b => b.id === e.id)) {
-        merged.push(e);
+    if (selectedEvent) {
+      allVisible.set(selectedEvent.id, selectedEvent);
+      for (const { id: relatedId } of selectedEvent.relatedEvents) {
+        const related = historicalEvents.find((e) => e.id === relatedId);
+        if (related) {
+          allVisible.set(related.id, related);
+        }
       }
     }
-    return merged;
+
+    return Array.from(allVisible.values());
   }, [activeYear, selectedEvent])
 
   const connectionFeatures: Feature<LineString>[] = selectedEvent
@@ -109,7 +115,7 @@ const MapView: React.FC = () => {
 
   return (
     <>
-      <Map
+      <LibreMap
         ref={mapRef}
         mapLib={import('maplibre-gl')}
         mapStyle="https://basemaps.cartocdn.com/gl/positron-gl-style/style.json"
@@ -252,7 +258,7 @@ const MapView: React.FC = () => {
             <Text>{hoverInfo.reason}</Text>
           </Popup>
         )}
-      </Map>
+      </LibreMap>
       <TimelinePanel
         year={activeYear}
         onChange={setActiveYear}
