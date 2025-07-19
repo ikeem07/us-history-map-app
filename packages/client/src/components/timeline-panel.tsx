@@ -86,7 +86,6 @@ const TimelinePanel: React.FC<TimelinePanelProps> = ({ year, onChange, min = 170
         height: 64
       }}
     >
-      <Button onClick={() => shiftWindow('left')}>{'←'}</Button>
       <Text strong>Year:</Text>
       <InputNumber
         min={min}
@@ -100,6 +99,7 @@ const TimelinePanel: React.FC<TimelinePanelProps> = ({ year, onChange, min = 170
         }}
         style={{ width: 100 }}
       />
+      <Button onClick={() => shiftWindow('left')}>{'←'}</Button>
       <Slider
         min={windowStart}
         max={windowEnd}

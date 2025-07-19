@@ -16,7 +16,7 @@ const MapView: React.FC = () => {
     lngLat: [number, number];
     reason: string;
   } | null>(null);
-  const [activeYear, setActiveYear] = React.useState<number | null>(1776);
+  const [activeYear, setActiveYear] = React.useState<number | null>(null);
 
   const mapRef = React.useRef<MapRef | null>(null);
 
