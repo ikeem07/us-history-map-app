@@ -120,33 +120,39 @@ const MapView: React.FC = () => {
         interactiveLayerIds={['line-hover-target']}
       >
         {/* Markers for each event */}
-        {visibleEvents.map((event) => (
-          <Marker
-            key={event.id}
-            latitude={event.location.latitude}
-            longitude={event.location.longitude}
-            anchor="bottom"
-          >
-            <div
-              title={event.title}
-              onClick={() => {
-                if (selectedEvent?.id === event.id) {
-                  setSelectedEvent(null);
-                } else {
-                  setSelectedEvent(event)
-                }
-              }}
-              style={{
-                width: 12,
-                height: 12,
-                borderRadius: '50%',
-                backgroundColor: 'red',
-                cursor: 'pointer',
-                border: '2px solid white'
-              }}
-            />
-          </Marker>
-        ))}
+        {visibleEvents.map((event) => {
+          const isPrimary = selectedEvent?.id === event.id;
+          const isRelated = selectedEvent?.relatedEvents.some((r) => r.id === event.id);
+          const color = isPrimary ? 'red' : isRelated ? 'blue' : 'gray';
+
+          return (
+            <Marker
+              key={event.id}
+              latitude={event.location.latitude}
+              longitude={event.location.longitude}
+              anchor="bottom"
+            >
+              <div
+                title={event.title}
+                onClick={() => {
+                  if (selectedEvent?.id === event.id) {
+                    setSelectedEvent(null);
+                  } else {
+                    setSelectedEvent(event)
+                  }
+                }}
+                style={{
+                  width: 12,
+                  height: 12,
+                  borderRadius: '50%',
+                  backgroundColor: color,
+                  cursor: 'pointer',
+                  border: '2px solid white'
+                }}
+              />
+            </Marker>
+          )
+        })}
 
         {/* Connection lines between events */}
         <Source id="connections" type="geojson" data={connectionData}>
