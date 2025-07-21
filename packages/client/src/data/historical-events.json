@@ -13,11 +13,18 @@
     "relatedEvents": [
       {
         "id": "event-2",
-        "reason": "This event is related to the American Revolutionary War, which includes the Battle of Yorktown."
+        "reason": "Both were major events in the American Revolution."
       }
     ],
-    "tags": ["american revolution", "independence"],
-    "people": ["Thomas Jefferson", "John Adams", "Benjamin Franklin"]
+    "tags": [
+      "american revolution",
+      "independence"
+    ],
+    "people": [
+      "Thomas Jefferson",
+      "John Adams",
+      "Benjamin Franklin"
+    ]
   },
   {
     "id": "event-2",
@@ -33,11 +40,17 @@
     "relatedEvents": [
       {
         "id": "event-1",
-        "reason": "This event is related to the Declaration of Independence, as it was a significant battle in the war for independence."
+        "reason": "Both were major events in the American Revolution."
       }
     ],
-    "tags": ["american revolution", "military"],
-    "people": ["George Washington", "Charles Cornwallis"]
+    "tags": [
+      "american revolution",
+      "war"
+    ],
+    "people": [
+      "George Washington",
+      "Charles Cornwallis"
+    ]
   },
   {
     "id": "event-3",
@@ -51,8 +64,14 @@
       "longitude": -77.0365
     },
     "relatedEvents": [],
-    "tags": ["civil war", "presidency"],
-    "people": ["Abraham Lincoln", "John Wilkes Booth"]
+    "tags": [
+      "civil war",
+      "presidency"
+    ],
+    "people": [
+      "Abraham Lincoln",
+      "John Wilkes Booth"
+    ]
   },
   {
     "id": "event-4",
@@ -63,11 +82,17 @@
       "city": "Kitty Hawk",
       "state": "NC",
       "latitude": 36.0646,
-      "longitude": -75.7050
+      "longitude": -75.705
     },
     "relatedEvents": [],
-    "tags": ["aviation", "innovation"],
-    "people": ["Orville Wright", "Wilbur Wright"]
+    "tags": [
+      "aviation",
+      "innovation"
+    ],
+    "people": [
+      "Orville Wright",
+      "Wilbur Wright"
+    ]
   },
   {
     "id": "event-5",
@@ -81,7 +106,376 @@
       "longitude": -77.0502
     },
     "relatedEvents": [],
-    "tags": ["civil rights", "speech"],
-    "people": ["Martin Luther King Jr."]
+    "tags": [
+      "civil rights movement",
+      "speech"
+    ],
+    "people": [
+      "Martin Luther King Jr."
+    ]
+  },
+  {
+    "id": "event-6",
+    "title": "Constitution of the United States Signed",
+    "description": "The U.S. Constitution was signed in Philadelphia, establishing the framework for the U.S. government.",
+    "date": "1787-09-17",
+    "location": {
+      "city": "Philadelphia",
+      "state": "PA",
+      "latitude": 39.9526,
+      "longitude": -75.1652
+    },
+    "relatedEvents": [
+      {
+        "id": "event-1",
+        "reason": "Followed independence with a new governing document."
+      }
+    ],
+    "tags": [
+      "independence",
+      "presidency"
+    ],
+    "people": [
+      "George Washington",
+      "James Madison"
+    ]
+  },
+  {
+    "id": "event-7",
+    "title": "Louisiana Purchase",
+    "description": "The United States doubled in size after purchasing the Louisiana Territory from France.",
+    "date": "1803-04-30",
+    "location": {
+      "city": "Washington",
+      "state": "DC",
+      "latitude": 38.9072,
+      "longitude": -77.0369
+    },
+    "relatedEvents": [
+      {
+        "id": "event-8",
+        "reason": "Related to Lewis and Clark Expedition Begins"
+      }
+    ],
+    "tags": [
+      "presidency",
+      "expansion"
+    ],
+    "people": [
+      "Thomas Jefferson"
+    ]
+  },
+  {
+    "id": "event-8",
+    "title": "Lewis and Clark Expedition Begins",
+    "description": "Lewis and Clark set out to explore the lands west of the Mississippi River after the Louisiana Purchase.",
+    "date": "1804-05-14",
+    "location": {
+      "city": "St. Louis",
+      "state": "MO",
+      "latitude": 38.627,
+      "longitude": -90.1994
+    },
+    "relatedEvents": [
+      {
+        "id": "event-7",
+        "reason": "Direct result of the Louisiana Purchase."
+      }
+    ],
+    "tags": [
+      "exploration",
+      "science"
+    ],
+    "people": [
+      "Meriwether Lewis",
+      "William Clark"
+    ]
+  },
+  {
+    "title": "California Gold Rush Begins",
+    "description": "The discovery of gold at Sutter's Mill in California led to a massive migration westward.",
+    "date": "1848-01-24",
+    "location": {
+      "city": "Coloma",
+      "state": "CA",
+      "latitude": 38.8,
+      "longitude": -120.8897
+    },
+    "tags": [
+      "expansion",
+      "economy"
+    ],
+    "people": [
+      "James W. Marshall"
+    ],
+    "id": "event-9",
+    "relatedEvents": [
+      {
+        "id": "event-10",
+        "reason": "Related to Battle of New Orleans"
+      }
+    ]
+  },
+  {
+    "title": "Compromise of 1850",
+    "description": "A package of five bills passed to defuse political confrontation over slavery expansion.",
+    "date": "1850-09-09",
+    "location": {
+      "city": "Washington",
+      "state": "DC",
+      "latitude": 38.9072,
+      "longitude": -77.0369
+    },
+    "tags": [
+      "civil rights",
+      "legislation"
+    ],
+    "people": [
+      "Henry Clay",
+      "Stephen A. Douglas"
+    ],
+    "id": "event-10",
+    "relatedEvents": [
+      {
+        "id": "event-9",
+        "reason": "Related to California Gold Rush Begins"
+      }
+    ]
+  },
+  {
+    "title": "Dred Scott Decision",
+    "description": "Supreme Court ruled that African Americans could not be American citizens.",
+    "date": "1857-03-06",
+    "location": {
+      "city": "Washington",
+      "state": "DC",
+      "latitude": 38.9072,
+      "longitude": -77.0369
+    },
+    "tags": [
+      "civil rights",
+      "supreme court"
+    ],
+    "people": [
+      "Roger B. Taney",
+      "Dred Scott"
+    ],
+    "id": "event-11",
+    "relatedEvents": []
+  },
+  {
+    "title": "Lincoln-Douglas Debates",
+    "description": "A series of seven debates during the Illinois Senate race focused on slavery and states' rights.",
+    "date": "1858-08-21",
+    "location": {
+      "city": "Ottawa",
+      "state": "IL",
+      "latitude": 41.3459,
+      "longitude": -88.8426
+    },
+    "tags": [
+      "civil war",
+      "presidency"
+    ],
+    "people": [
+      "Abraham Lincoln",
+      "Stephen A. Douglas"
+    ],
+    "id": "event-12",
+    "relatedEvents": []
+  },
+  {
+    "title": "Start of the American Civil War",
+    "description": "The Confederate attack on Fort Sumter marked the beginning of the Civil War.",
+    "date": "1861-04-12",
+    "location": {
+      "city": "Charleston",
+      "state": "SC",
+      "latitude": 32.7765,
+      "longitude": -79.9311
+    },
+    "tags": [
+      "civil war",
+      "military"
+    ],
+    "people": [
+      "Robert Anderson",
+      "P.G.T. Beauregard"
+    ],
+    "id": "event-13",
+    "relatedEvents": []
+  },
+  {
+    "title": "Emancipation Proclamation Issued",
+    "description": "President Lincoln declared all slaves in Confederate states to be free.",
+    "date": "1863-01-01",
+    "location": {
+      "city": "Washington",
+      "state": "DC",
+      "latitude": 38.9072,
+      "longitude": -77.0369
+    },
+    "tags": [
+      "civil rights",
+      "presidency"
+    ],
+    "people": [
+      "Abraham Lincoln"
+    ],
+    "id": "event-14",
+    "relatedEvents": []
+  },
+  {
+    "title": "Gettysburg Address",
+    "description": "Abraham Lincoln delivered one of the most famous speeches in U.S. history at a Civil War cemetery.",
+    "date": "1863-11-19",
+    "location": {
+      "city": "Gettysburg",
+      "state": "PA",
+      "latitude": 39.8309,
+      "longitude": -77.2311
+    },
+    "tags": [
+      "civil war",
+      "speech"
+    ],
+    "people": [
+      "Abraham Lincoln"
+    ],
+    "id": "event-15",
+    "relatedEvents": []
+  },
+  {
+    "title": "13th Amendment Ratified",
+    "description": "Abolished slavery in the United States.",
+    "date": "1865-12-06",
+    "location": {
+      "city": "Washington",
+      "state": "DC",
+      "latitude": 38.9072,
+      "longitude": -77.0369
+    },
+    "tags": [
+      "civil rights",
+      "legislation"
+    ],
+    "people": [],
+    "id": "event-16",
+    "relatedEvents": []
+  },
+  {
+    "title": "Transcontinental Railroad Completed",
+    "description": "Linked the eastern U.S. rail network with California, revolutionizing transportation.",
+    "date": "1869-05-10",
+    "location": {
+      "city": "Promontory Summit",
+      "state": "UT",
+      "latitude": 41.6178,
+      "longitude": -112.5475
+    },
+    "tags": [
+      "technology",
+      "expansion"
+    ],
+    "people": [],
+    "id": "event-17",
+    "relatedEvents": []
+  },
+  {
+    "title": "Statue of Liberty Dedicated",
+    "description": "The Statue of Liberty was dedicated in New York Harbor.",
+    "date": "1886-10-28",
+    "location": {
+      "city": "New York",
+      "state": "NY",
+      "latitude": 40.6892,
+      "longitude": -74.0445
+    },
+    "tags": [
+      "immigration",
+      "symbolism"
+    ],
+    "people": [
+      "Grover Cleveland"
+    ],
+    "id": "event-18",
+    "relatedEvents": []
+  },
+  {
+    "title": "Wright Brothers Test Flight at Huffman Prairie",
+    "description": "The Wrights improved controlled flight on a large field in Ohio.",
+    "date": "1904-09-20",
+    "location": {
+      "city": "Dayton",
+      "state": "OH",
+      "latitude": 39.7817,
+      "longitude": -84.1349
+    },
+    "tags": [
+      "aviation",
+      "innovation"
+    ],
+    "people": [
+      "Wilbur Wright",
+      "Orville Wright"
+    ],
+    "id": "event-19",
+    "relatedEvents": []
+  },
+  {
+    "title": "U.S. Entry into World War I",
+    "description": "The United States declared war on Germany and joined the Allied powers.",
+    "date": "1917-04-06",
+    "location": {
+      "city": "Washington",
+      "state": "DC",
+      "latitude": 38.9072,
+      "longitude": -77.0369
+    },
+    "tags": [
+      "war",
+      "world war"
+    ],
+    "people": [
+      "Woodrow Wilson"
+    ],
+    "id": "event-20",
+    "relatedEvents": []
+  },
+  {
+    "title": "19th Amendment Ratified",
+    "description": "Granted women the right to vote.",
+    "date": "1920-08-18",
+    "location": {
+      "city": "Washington",
+      "state": "DC",
+      "latitude": 38.9072,
+      "longitude": -77.0369
+    },
+    "tags": [
+      "civil rights",
+      "women's rights"
+    ],
+    "people": [],
+    "id": "event-21",
+    "relatedEvents": []
+  },
+  {
+    "title": "Stock Market Crash of 1929",
+    "description": "A major financial collapse that marked the beginning of the Great Depression.",
+    "date": "1929-10-29",
+    "location": {
+      "city": "New York",
+      "state": "NY",
+      "latitude": 40.7069,
+      "longitude": -74.0113
+    },
+    "tags": [
+      "economy",
+      "depression"
+    ],
+    "people": [],
+    "id": "event-22",
+    "relatedEvents": []
   }
 ]

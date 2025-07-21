@@ -20,6 +20,8 @@ const MapView: React.FC = () => {
   const [activeYear, setActiveYear] = React.useState<number | null>(null);
   const [selectedTags, setSelectedTags] = React.useState<string[]>([]);
   const [selectedPeople, setSelectedPeople] = React.useState<string[]>([]);
+  const [locationEvents, setLocationEvents] = React.useState<HistoricalEvent[]>([]);
+  const [popupPosition, setPopupPosition] = React.useState<[number, number] | null>(null);
 
   const mapRef = React.useRef<MapRef | null>(null);
 
@@ -187,11 +189,12 @@ const MapView: React.FC = () => {
               <div
                 title={event.title}
                 onClick={() => {
-                  if (selectedEvent?.id === event.id) {
-                    setSelectedEvent(null);
-                  } else {
-                    setSelectedEvent(event)
-                  }
+                  const sameLocationEvents = visibleEvents.filter(e =>
+                    e.location.latitude === event.location.latitude &&
+                    e.location.longitude === event.location.longitude
+                  )
+                  setLocationEvents(sameLocationEvents);
+                  setPopupPosition([event.location.longitude, event.location.latitude]);
                 }}
                 style={{
                   width: 12,
@@ -288,6 +291,45 @@ const MapView: React.FC = () => {
             style={{ minWidth: 200 }}
           >
             <Text>{hoverInfo.reason}</Text>
+          </Popup>
+        )}
+
+        {/* Popup for same location events */}
+        {popupPosition && locationEvents.length > 0 && (
+          <Popup
+            longitude={popupPosition[0]}
+            latitude={popupPosition[1]}
+            closeOnClick={false}
+            onClose={() => {
+              setPopupPosition(null);
+              setLocationEvents([]);
+            }}
+            anchor='top'
+          >
+            <div style={{ maxWidth: 240 }}>
+              <strong>Events at this location:</strong>
+              <ul style={{ paddingLeft: 16, marginTop: 8 }}>
+                {locationEvents.map((e) => (
+                  <li
+                    key={e.id}
+                    onClick={() => {
+                      setSelectedEvent(e);
+                      setPopupPosition(null);
+                      setLocationEvents([]);
+                    }}
+                    style={{
+                      cursor: 'pointer',
+                      marginBottom: 6,
+                      textDecoration: 'underline',
+                      color: '#1677ff'
+                    }}
+                  >
+                    {e.title} <br />
+                    <small>{e.date}</small>
+                  </li>
+                ))}
+              </ul>
+            </div>
           </Popup>
         )}
       </LibreMap>
