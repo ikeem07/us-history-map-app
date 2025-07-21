@@ -6,6 +6,7 @@ import type { Feature, FeatureCollection, LineString } from 'geojson';
 import events from '../data/historical-events.json';
 import TimelinePanel from './timeline-panel';
 import type { HistoricalEvent } from '../types/historical-event';
+import FilterSidebar from './filter-sidebar';
 
 
 const historicalEvents = events as HistoricalEvent[];
@@ -17,6 +18,8 @@ const MapView: React.FC = () => {
     reason: string;
   } | null>(null);
   const [activeYear, setActiveYear] = React.useState<number | null>(null);
+  const [selectedTags, setSelectedTags] = React.useState<string[]>([]);
+  const [selectedPeople, setSelectedPeople] = React.useState<string[]>([]);
 
   const mapRef = React.useRef<MapRef | null>(null);
 
@@ -45,30 +48,47 @@ const MapView: React.FC = () => {
   }, [selectedEvent]);
 
   const visibleEvents = React.useMemo(() => {
-    const base = 
-      activeYear != null
-        ? historicalEvents.filter(
-          (e) => new Date(e.date).getFullYear() === activeYear
-        )
-        : historicalEvents;
+    const filtered = historicalEvents.filter((event) => {
+      const matchesYear =
+        activeYear == null ||
+        new Date(event.date).getFullYear() === activeYear;
     
+      const matchesTags =
+        selectedTags.length === 0 ||
+        (event.tags && event.tags.some((tag) => selectedTags.includes(tag)));
+
+      const matchesPeople =
+        selectedPeople.length === 0 ||
+        (event.people && event.people.some((p) => selectedPeople.includes(p)));
+
+      return matchesYear && matchesTags && matchesPeople;
+    });
+
     const allVisible = new Map<string, HistoricalEvent>();
-    for (const event of base) {
-      allVisible.set(event.id, event);
-    }
+    for (const e of filtered) allVisible.set(e.id, e);
 
     if (selectedEvent) {
       allVisible.set(selectedEvent.id, selectedEvent);
-      for (const { id: relatedId } of selectedEvent.relatedEvents) {
-        const related = historicalEvents.find((e) => e.id === relatedId);
-        if (related) {
-          allVisible.set(related.id, related);
-        }
+      for (const { id } of selectedEvent.relatedEvents) {
+        const related = historicalEvents.find((e) => e.id === id);
+        if (related) allVisible.set(id, related);
       }
     }
 
     return Array.from(allVisible.values());
-  }, [activeYear, selectedEvent])
+  }, [historicalEvents, activeYear, selectedTags, selectedPeople, selectedEvent])
+
+  const allTags = React.useMemo(() => {
+    const tagSet = new Set<string>();
+    historicalEvents.forEach(e => e.tags?.forEach(tag => tagSet.add(tag)));
+    return Array.from(tagSet).sort();
+  }, [historicalEvents]);
+
+  const allPeople = React.useMemo(() => {
+    const peopleSet = new Set<string>();
+    historicalEvents.forEach(e => e.people?.forEach(p => peopleSet.add(p)));
+    return Array.from(peopleSet).sort();
+  }, [historicalEvents]);
 
   const connectionFeatures: Feature<LineString>[] = selectedEvent
     ? selectedEvent.relatedEvents
@@ -115,6 +135,18 @@ const MapView: React.FC = () => {
 
   return (
     <>
+      <FilterSidebar
+        selectedTags={selectedTags}
+        selectedPeople={selectedPeople}
+        allTags={allTags}
+        allPeople={allPeople}
+        onChangeTags={setSelectedTags}
+        onChangePeople={setSelectedPeople}
+        onClear={() => {
+          setSelectedTags([]);
+          setSelectedPeople([]);
+        }}
+      />
       <LibreMap
         ref={mapRef}
         mapLib={import('maplibre-gl')}

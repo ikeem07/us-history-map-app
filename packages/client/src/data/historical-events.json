@@ -16,7 +16,7 @@
         "reason": "This event is related to the American Revolutionary War, which includes the Battle of Yorktown."
       }
     ],
-    "tags": ["revolution", "independence"],
+    "tags": ["american revolution", "independence"],
     "people": ["Thomas Jefferson", "John Adams", "Benjamin Franklin"]
   },
   {
@@ -36,7 +36,7 @@
         "reason": "This event is related to the Declaration of Independence, as it was a significant battle in the war for independence."
       }
     ],
-    "tags": ["revolution", "military"],
+    "tags": ["american revolution", "military"],
     "people": ["George Washington", "Charles Cornwallis"]
   },
   {
