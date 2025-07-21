@@ -193,8 +193,15 @@ const MapView: React.FC = () => {
                     e.location.latitude === event.location.latitude &&
                     e.location.longitude === event.location.longitude
                   )
-                  setLocationEvents(sameLocationEvents);
-                  setPopupPosition([event.location.longitude, event.location.latitude]);
+
+                  if (sameLocationEvents.length === 1) {
+                    setSelectedEvent(sameLocationEvents[0]);
+                    setPopupPosition(null);
+                    setLocationEvents([]);
+                  } else {
+                    setLocationEvents(sameLocationEvents);
+                    setPopupPosition([event.location.longitude, event.location.latitude]);
+                  }
                 }}
                 style={{
                   width: 12,
@@ -295,7 +302,7 @@ const MapView: React.FC = () => {
         )}
 
         {/* Popup for same location events */}
-        {popupPosition && locationEvents.length > 0 && (
+        {popupPosition && locationEvents.length > 1 && (
           <Popup
             longitude={popupPosition[0]}
             latitude={popupPosition[1]}
