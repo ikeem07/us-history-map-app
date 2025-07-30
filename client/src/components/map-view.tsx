@@ -2,6 +2,7 @@ import React, { act, useEffect } from 'react';
 import { Map as LibreMap, Marker, Source, Layer, Popup, MapRef } from 'react-map-gl/maplibre';
 import { Card, Typography, Slider } from 'antd';
 import type { Feature, FeatureCollection, LineString } from 'geojson';
+import { Helmet } from 'react-helmet';
 
 import events from '../data/historical-events.json';
 import TimelinePanel from './timeline-panel';
@@ -137,6 +138,10 @@ const MapView: React.FC = () => {
 
   return (
     <>
+      <Helmet>
+        <title>History Map</title>
+        <meta name="description" content="Explore historical events on an interactive map." />
+      </Helmet>
       <FilterSidebar
         selectedTags={selectedTags}
         selectedPeople={selectedPeople}
