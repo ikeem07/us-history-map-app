@@ -6,7 +6,7 @@ import './index.css';
 import App from './App';
 import GA4React from 'ga-4-react';
 
-const ga4react = new GA4React('G-47XS6XQLBV' , {
+const ga4react = new GA4React('G-FQ0K0BMW43' , {
   debug_mode: true
 });
 
