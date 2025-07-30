@@ -189,7 +189,7 @@ const MapView: React.FC = () => {
               key={event.id}
               latitude={event.location.latitude}
               longitude={event.location.longitude}
-              anchor="bottom"
+              anchor="center"
             >
               <div
                 title={event.title}
