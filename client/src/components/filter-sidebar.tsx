@@ -72,7 +72,19 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({
           style={{ marginBottom: 8 }}
           allowClear
         />
-        <div style={{ maxHeight: 240, overflowY: 'auto', marginBottom: 8 }}>
+        <div 
+          style={{ 
+            minHeight: 240,
+            height: 240,
+            resize: 'vertical', 
+            overflowY: 'auto',
+            marginBottom: 8,
+            padding: 4,
+            border: '1px solid #d9d9d9',
+            borderRadius: 4,
+            display: 'block'
+          }}
+        >
           <Space wrap>
             {filteredTags.map(tag => (
               <Tag
