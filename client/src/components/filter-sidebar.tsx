@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { Drawer, Select, Button, Typography, Tag, Space } from 'antd';
+import { Drawer, Select, Button, Typography, Tag, Space, Input } from 'antd';
 import { CheckOutlined, FilterOutlined } from '@ant-design/icons';
 
 const { Title } = Typography;
 const { Option } = Select;
+const { Search } = Input;
 
 export type FilterSidebarProps = {
   selectedTags: string[];
@@ -25,6 +26,7 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({
   onClear
 }) => {
   const [visible, setVisible] = useState(false);
+  const [tagSearch, setTagSearch] = useState('');
 
   const toggleTag = (tag: string) => {
     if (selectedTags.includes(tag)) {
@@ -35,6 +37,10 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({
   };
 
   const toggleDrawer = () => setVisible(prev => !prev);
+
+  const filteredTags = allTags.filter(tag =>
+    tag.toLowerCase().includes(tagSearch.toLowerCase())
+  );
 
   return (
     <>
@@ -59,18 +65,34 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({
         style={{ position: 'absolute', zIndex: 1050 }}
       >
         <Title level={5}>Tags</Title>
-        <Space wrap style={{ marginBottom: 16 }}>
-          {allTags.map(tag => (
-            <Tag
-              key={tag}
-              color={selectedTags.includes(tag) ? 'blue' : 'default'}
-              onClick={() => toggleTag(tag)}
-              style={{ cursor: 'pointer', userSelect: 'none' }}
-            >
-              {tag} {selectedTags.includes(tag) && <CheckOutlined />}
-            </Tag>
-          ))}
-        </Space>
+        <Search
+          placeholder="Search tags"
+          value={tagSearch}
+          onChange={(e) => setTagSearch(e.target.value)}
+          style={{ marginBottom: 8 }}
+          allowClear
+        />
+        <div style={{ maxHeight: 240, overflowY: 'auto', marginBottom: 8 }}>
+          <Space wrap>
+            {filteredTags.map(tag => (
+              <Tag
+                key={tag}
+                color={selectedTags.includes(tag) ? 'blue' : 'default'}
+                onClick={() => toggleTag(tag)}
+                style={{ cursor: 'pointer', userSelect: 'none' }}
+              >
+                {tag} {selectedTags.includes(tag) && <CheckOutlined />}
+              </Tag>
+            ))}
+          </Space>
+        </div>
+        <Button
+          size='small'
+          onClick={() => onChangeTags([])}
+          style={{ marginBottom: 16, backgroundColor: '#fff1f0', borderColor: '#ffa39e', color: '#cf1322' }}
+        >
+          Clear Tag Selection
+        </Button>
 
         <Title level={5}>People</Title>
         <Select
@@ -88,7 +110,13 @@ const FilterSidebar: React.FC<FilterSidebarProps> = ({
           ))}
         </Select>
 
-        <Button block onClick={onClear}>Clear Filters</Button>
+        <Button 
+          block
+          onClick={onClear}
+          style={{ backgroundColor: '#fff1f0', borderColor: '#ffa39e', color: '#cf1322' }}
+        >
+          Clear Filters
+        </Button>
       </Drawer>
     </>
   );
