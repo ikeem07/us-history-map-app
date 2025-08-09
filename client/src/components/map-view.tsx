@@ -131,16 +131,25 @@ const MapView: React.FC = () => {
     const enter = () => (map.getCanvas().style.cursor = 'pointer');
     const leave = () => (map.getCanvas().style.cursor = '');
 
+    // clusters bubble + their text label
     map.on('mouseenter', 'clusters', enter);
     map.on('mouseleave', 'clusters', leave);
+    map.on('mouseenter', 'cluster-count', enter);
+    map.on('mouseleave', 'cluster-count', leave);
+
+    // the actual clickable hit area for points (topmost)
     map.on('mouseenter', 'unclustered-point-hit', enter);
     map.on('mouseleave', 'unclustered-point-hit', leave);
+
+    // connection-line hover target
     map.on('mouseenter', 'line-hover-target', enter);
     map.on('mouseleave', 'line-hover-target', leave);
 
     return () => {
       map.off('mouseenter', 'clusters', enter);
       map.off('mouseleave', 'clusters', leave);
+      map.off('mouseenter', 'cluster-count', enter);
+      map.off('mouseleave', 'cluster-count', leave);
       map.off('mouseenter', 'unclustered-point-hit', enter);
       map.off('mouseleave', 'unclustered-point-hit', leave);
       map.off('mouseenter', 'line-hover-target', enter);
@@ -179,7 +188,7 @@ const MapView: React.FC = () => {
         style={{ width: '100%', height: '100vh' }}
         interactiveLayerIds={[
           'clusters',
-          // do NOT include 'cluster-count' so text labels don't steal clicks
+          'cluster-count',
           'unclustered-point-hit',
           'line-hover-target',
         ]}
