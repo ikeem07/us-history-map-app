@@ -13,10 +13,7 @@ const historicalEvents = events as HistoricalEvent[];
 
 const MapView: React.FC = () => {
   const [selectedEvent, setSelectedEvent] = React.useState<HistoricalEvent | null>(null);
-  const [hoverInfo, setHoverInfo] = React.useState<{
-    lngLat: [number, number];
-    reason: string;
-  } | null>(null);
+  const [hoverInfo, setHoverInfo] = React.useState<{ lngLat: [number, number]; reason: string } | null>(null);
   const [activeYear, setActiveYear] = React.useState<number | null>(null);
   const [selectedTags, setSelectedTags] = React.useState<string[]>([]);
   const [selectedPeople, setSelectedPeople] = React.useState<string[]>([]);
@@ -24,25 +21,16 @@ const MapView: React.FC = () => {
   const [popupPosition, setPopupPosition] = React.useState<[number, number] | null>(null);
 
   const mapRef = React.useRef<MapRef | null>(null);
-
   const { Title, Paragraph, Text } = Typography;
 
-  // ————————————————————————————————————————————————————————————————
-  //  Filters -> visible events
-  // ————————————————————————————————————————————————————————————————
+  // ———————————————————————————————————————————
+  // Filters -> visible events
+  // ———————————————————————————————————————————
   const visibleEvents = React.useMemo(() => {
     const filtered = historicalEvents.filter((event) => {
-      const matchesYear =
-        activeYear == null || new Date(event.date).getFullYear() === activeYear;
-
-      const matchesTags =
-        selectedTags.length === 0 ||
-        (event.tags && event.tags.some((tag) => selectedTags.includes(tag)));
-
-      const matchesPeople =
-        selectedPeople.length === 0 ||
-        (event.people && event.people.some((p) => selectedPeople.includes(p)));
-
+      const matchesYear = activeYear == null || new Date(event.date).getFullYear() === activeYear;
+      const matchesTags = selectedTags.length === 0 || (event.tags && event.tags.some((t) => selectedTags.includes(t)));
+      const matchesPeople = selectedPeople.length === 0 || (event.people && event.people.some((p) => selectedPeople.includes(p)));
       return matchesYear && matchesTags && matchesPeople;
     });
 
@@ -56,13 +44,12 @@ const MapView: React.FC = () => {
         if (related) allVisible.set(id, related);
       }
     }
-
     return Array.from(allVisible.values());
   }, [activeYear, selectedTags, selectedPeople, selectedEvent]);
 
   const allTags = React.useMemo(() => {
     const tagSet = new Set<string>();
-    historicalEvents.forEach((e) => e.tags?.forEach((tag) => tagSet.add(tag)));
+    historicalEvents.forEach((e) => e.tags?.forEach((t) => tagSet.add(t)));
     return Array.from(tagSet).sort();
   }, []);
 
@@ -72,88 +59,52 @@ const MapView: React.FC = () => {
     return Array.from(peopleSet).sort();
   }, []);
 
-  // ————————————————————————————————————————————————————————————————
-  //  Connection lines between selected event and its visible related events
-  // ————————————————————————————————————————————————————————————————
+  // ———————————————————————————————————————————
+  // Connection lines for selected + related
+  // ———————————————————————————————————————————
   const connectionFeatures: Feature<LineString>[] = selectedEvent
     ? selectedEvent.relatedEvents
         .map(({ id: relatedId, reason }): Feature<LineString> | null => {
           const target = visibleEvents.find((e) => e.id === relatedId);
           if (!target) return null;
-
-          const [lng1, lat1] = [
-            selectedEvent.location.longitude,
-            selectedEvent.location.latitude,
-          ];
-          const [lng2, lat2] = [
-            target.location.longitude,
-            target.location.latitude,
-          ];
+          const [lng1, lat1] = [selectedEvent.location.longitude, selectedEvent.location.latitude];
+          const [lng2, lat2] = [target.location.longitude, target.location.latitude];
 
           let label = '';
-          if (lng1 < lng2) {
-            label = `${selectedEvent.title} <-> ${target.title}`;
-          } else if (lng1 > lng2) {
-            label = `${target.title} <-> ${selectedEvent.title}`;
-          } else if (lat1 < lat2) {
-            label = `${selectedEvent.title} <-> ${target.title}`;
-          } else {
-            label = `${target.title} <-> ${selectedEvent.title}`;
-          }
+          if (lng1 < lng2) label = `${selectedEvent.title} <-> ${target.title}`;
+          else if (lng1 > lng2) label = `${target.title} <-> ${selectedEvent.title}`;
+          else if (lat1 < lat2) label = `${selectedEvent.title} <-> ${target.title}`;
+          else label = `${target.title} <-> ${selectedEvent.title}`;
 
           return {
             type: 'Feature',
-            geometry: {
-              type: 'LineString',
-              coordinates: [
-                [lng1, lat1],
-                [lng2, lat2],
-              ],
-            },
-            properties: {
-              label,
-              reason,
-            },
+            geometry: { type: 'LineString', coordinates: [[lng1, lat1], [lng2, lat2]] },
+            properties: { label, reason },
           };
         })
         .filter((f): f is Feature<LineString> => f !== null)
     : [];
 
-  const connectionData: FeatureCollection<LineString> = {
-    type: 'FeatureCollection',
-    features: connectionFeatures,
-  };
+  const connectionData: FeatureCollection<LineString> = { type: 'FeatureCollection', features: connectionFeatures };
 
-  // ————————————————————————————————————————————————————————————————
-  //  Group visible events by exact lat/lng -> one point per location
-  //  Each point keeps the list of event ids at that coordinate.
-  //  These points are then clustered by MapLibre when zoomed out.
-  // ————————————————————————————————————————————————————————————————
-  type LocationPointProps = {
-    eventIds: string[];
-    role: 'primary' | 'related' | 'default';
-    lng: number;
-    lat: number;
-  };
+  // ———————————————————————————————————————————
+  // Build one point per coordinate, with eventIds encoded as string
+  // (some GL workers serialize arrays -> strings; we control it explicitly)
+  // ———————————————————————————————————————————
+  type LocationPointProps = { eventIds: string; role: 'primary' | 'related' | 'default'; lng: number; lat: number };
 
   const locationPoints: FeatureCollection<Point, LocationPointProps> = React.useMemo(() => {
     const grouped = new Map<string, { lat: number; lng: number; eventIds: string[] }>();
-
     for (const e of visibleEvents) {
       const key = `${e.location.latitude},${e.location.longitude}`;
       if (!grouped.has(key)) {
-        grouped.set(key, {
-          lat: e.location.latitude,
-          lng: e.location.longitude,
-          eventIds: [e.id],
-        });
+        grouped.set(key, { lat: e.location.latitude, lng: e.location.longitude, eventIds: [e.id] });
       } else {
         grouped.get(key)!.eventIds.push(e.id);
       }
     }
 
     const features: Feature<Point, LocationPointProps>[] = [];
-
     const selectedId = selectedEvent?.id;
     const relatedIds = new Set<string>(selectedEvent?.relatedEvents.map((r) => r.id) ?? []);
 
@@ -165,28 +116,23 @@ const MapView: React.FC = () => {
       features.push({
         type: 'Feature',
         geometry: { type: 'Point', coordinates: [lng, lat] },
-        properties: { eventIds, role, lat, lng },
+        properties: { eventIds: eventIds.join(','), role, lng, lat },
       });
     }
-
     return { type: 'FeatureCollection', features };
   }, [visibleEvents, selectedEvent]);
 
-  // ————————————————————————————————————————————————————————————————
-  //  Pointer cursor for interactive layers (clusters, points, hover lines)
-  // ————————————————————————————————————————————————————————————————
+  // ———————————————————————————————————————————
+  // Pointer cursor for interactive layers
+  // ———————————————————————————————————————————
   useEffect(() => {
     if (!mapRef.current) return;
     const map = mapRef.current.getMap();
-
     const enter = () => (map.getCanvas().style.cursor = 'pointer');
     const leave = () => (map.getCanvas().style.cursor = '');
 
-    // Note: these listeners require layers to exist; attach after first render
     map.on('mouseenter', 'clusters', enter);
     map.on('mouseleave', 'clusters', leave);
-    map.on('mouseenter', 'unclustered-point', enter);
-    map.on('mouseleave', 'unclustered-point', leave);
     map.on('mouseenter', 'unclustered-point-hit', enter);
     map.on('mouseleave', 'unclustered-point-hit', leave);
     map.on('mouseenter', 'line-hover-target', enter);
@@ -195,8 +141,6 @@ const MapView: React.FC = () => {
     return () => {
       map.off('mouseenter', 'clusters', enter);
       map.off('mouseleave', 'clusters', leave);
-      map.off('mouseenter', 'unclustered-point', enter);
-      map.off('mouseleave', 'unclustered-point', leave);
       map.off('mouseenter', 'unclustered-point-hit', enter);
       map.off('mouseleave', 'unclustered-point-hit', leave);
       map.off('mouseenter', 'line-hover-target', enter);
@@ -204,9 +148,9 @@ const MapView: React.FC = () => {
     };
   }, []);
 
-  // ————————————————————————————————————————————————————————————————
-  //  Map
-  // ————————————————————————————————————————————————————————————————
+  // ———————————————————————————————————————————
+  // Map
+  // ———————————————————————————————————————————
   return (
     <>
       <Helmet>
@@ -235,18 +179,15 @@ const MapView: React.FC = () => {
         style={{ width: '100%', height: '100vh' }}
         interactiveLayerIds={[
           'clusters',
-          // intentionally exclude 'cluster-count' so clicks fall through to the circle
-          'unclustered-point',
+          // do NOT include 'cluster-count' so text labels don't steal clicks
+          'unclustered-point-hit',
           'line-hover-target',
         ]}
-               onMouseMove={(e) => {
+        onMouseMove={(e) => {
           const features = e.features ?? [];
           const hovered = features.find((f) => f.layer.id === 'line-hover-target');
-          if ((hovered as any)?.properties?.reason) {
-            setHoverInfo({
-              lngLat: e.lngLat.toArray() as [number, number],
-              reason: (hovered as any).properties.reason as string,
-            });
+          if (hovered && (hovered as any).properties?.reason) {
+            setHoverInfo({ lngLat: e.lngLat.toArray() as [number, number], reason: (hovered as any).properties.reason as string });
           } else {
             setHoverInfo(null);
           }
@@ -255,28 +196,40 @@ const MapView: React.FC = () => {
           const map = mapRef.current?.getMap();
           if (!map) return;
 
-          // Use queryRenderedFeatures to avoid interference from other interactive layers
-          const pointHits = map.queryRenderedFeatures(e.point, { layers: ['unclustered-point-hit','unclustered-point'] }) as any[];
-          const clusterHits = map.queryRenderedFeatures(e.point, { layers: ['clusters'] }) as any[];
+          // Widen hit area to a small box for easier clicking
+          const pad = 10;
+          type Pt = [number, number];
+          const tl: Pt = [e.point.x - pad, e.point.y - pad];
+          const br: Pt = [e.point.x + pad, e.point.y + pad];
+          const bbox: [Pt, Pt] = [tl, br];
 
-          // 1) Prioritize cluster zoom when a cluster is hit
+          // 1) Clusters -> expand zoom
+          const clusterHits = map.queryRenderedFeatures(bbox as any, { layers: ['clusters'] }) as any[];
           if (clusterHits.length) {
-            const feature = clusterHits[0] as any;
-            const clusterId = feature.properties.cluster_id as number;
-            const source: any = map.getSource('events');
-            if (source && typeof source.getClusterExpansionZoom === 'function') {
-              const result = source.getClusterExpansionZoom(clusterId);
-              const z = typeof result === 'number' ? result : await result;
-              map.easeTo({ center: feature.geometry.coordinates as [number, number], zoom: z });
+            const f = clusterHits[0];
+            const clusterId = f.properties.cluster_id as number;
+            const src: any = map.getSource('events');
+            if (src && typeof src.getClusterExpansionZoom === 'function') {
+              // Support both callback-style and (number|Promise<number>) return
+              if (src.getClusterExpansionZoom.length === 2) {
+                src.getClusterExpansionZoom(clusterId, (_err: any, zoom: number) => {
+                  map.easeTo({ center: f.geometry.coordinates as [number, number], zoom });
+                });
+              } else {
+                const res = src.getClusterExpansionZoom(clusterId);
+                const zoom = typeof res === 'number' ? res : await res;
+                map.easeTo({ center: f.geometry.coordinates as [number, number], zoom });
+              }
             }
             return;
           }
 
-          // 2) Otherwise, check for an unclustered point hit
+          // 2) Unclustered points -> open single or multi list
+          const pointHits = map.queryRenderedFeatures(bbox as any, { layers: ['unclustered-point-hit'] }) as any[];
           if (pointHits.length) {
-            const feature = pointHits[0] as any;
-            const ids: string[] = feature.properties?.eventIds || [];
-            const [lng, lat] = feature.geometry.coordinates as [number, number];
+            const f = pointHits[0];
+            const ids = ((f.properties?.eventIds as string) || '').split(',').filter(Boolean);
+            const [lng, lat] = f.geometry.coordinates as [number, number];
 
             if (ids.length <= 1) {
               const ev = historicalEvents.find((x) => x.id === ids[0]);
@@ -286,10 +239,7 @@ const MapView: React.FC = () => {
                 setLocationEvents([]);
               }
             } else {
-              const list = ids
-                .map((id) => historicalEvents.find((x) => x.id === id))
-                .filter((x): x is HistoricalEvent => !!x);
-
+              const list = ids.map((id) => historicalEvents.find((x) => x.id === id)).filter((x): x is HistoricalEvent => !!x);
               setLocationEvents(list);
               setPopupPosition([lng, lat]);
             }
@@ -305,6 +255,7 @@ const MapView: React.FC = () => {
           cluster={true}
           clusterRadius={60}
           clusterMaxZoom={12}
+          generateId={true}
         >
           {/* Clusters (bubbles) */}
           <Layer
@@ -315,11 +266,11 @@ const MapView: React.FC = () => {
               'circle-color': [
                 'step',
                 ['get', 'point_count'],
-                '#9ecae1', // small
+                '#9ecae1',
                 10,
-                '#6baed6', // medium
+                '#6baed6',
                 25,
-                '#3182bd', // large
+                '#3182bd',
               ],
               'circle-radius': [
                 'step',
@@ -340,15 +291,11 @@ const MapView: React.FC = () => {
             id="cluster-count"
             type="symbol"
             filter={["has", "point_count"] as any}
-            layout={{
-              'text-field': ['get', 'point_count'] as any,
-              'text-size': 12,
-              'text-font': ['Open Sans Bold', 'Arial Unicode MS Bold'],
-            }}
+            layout={{ 'text-field': ['get', 'point_count'] as any, 'text-size': 12, 'text-font': ['Open Sans Bold', 'Arial Unicode MS Bold'] }}
             paint={{ 'text-color': '#08306b' }}
           />
 
-          {/* Unclustered points (each is one coordinate; may represent multiple events) */}
+          {/* Unclustered points (one per coordinate; may represent multiple events) */}
           <Layer
             id="unclustered-point"
             type="circle"
@@ -367,39 +314,23 @@ const MapView: React.FC = () => {
             }}
           />
 
-          {/* Invisible larger hit area for easier clicking */}
+          {/* Invisible, larger hit area to make clicking easy */}
           <Layer
             id="unclustered-point-hit"
             type="circle"
             filter={["!", ["has", "point_count"]] as any}
-            paint={{
-              'circle-color': '#000000',
-              'circle-opacity': 0.01,
-              'circle-radius': 14,
-            }}
+            paint={{ 'circle-color': '#000000', 'circle-opacity': 0.01, 'circle-radius': 14 }}
           />
         </Source>
 
         {/* Connection lines between events */}
         <Source id="connections" type="geojson" data={connectionData}>
-          {/* Invisible hover layer */}
-          <Layer
-            id="line-hover-target"
-            type="line"
-            paint={{ 'line-color': '#000', 'line-opacity': 0, 'line-width': 10 }}
-          />
-          {/* Actual visible line layer */}
+          <Layer id="line-hover-target" type="line" paint={{ 'line-color': '#000', 'line-opacity': 0, 'line-width': 10 }} />
           <Layer id="lines" type="line" paint={{ 'line-color': '#333', 'line-width': 2 }} />
-          {/* Label layer */}
           <Layer
             id="line-labels"
             type="symbol"
-            layout={{
-              'symbol-placement': 'line-center',
-              'text-field': ['get', 'label'] as any,
-              'text-size': 13,
-              'text-anchor': 'top',
-            }}
+            layout={{ 'symbol-placement': 'line-center', 'text-field': ['get', 'label'] as any, 'text-size': 13, 'text-anchor': 'top' }}
             paint={{ 'text-color': 'rgba(12, 107, 3, 1)' }}
           />
         </Source>
@@ -434,20 +365,12 @@ const MapView: React.FC = () => {
 
         {/* Hover relationship reason popup */}
         {hoverInfo && (
-          <Popup
-            longitude={hoverInfo.lngLat[0]}
-            latitude={hoverInfo.lngLat[1]}
-            closeButton={false}
-            closeOnClick={false}
-            offset={10}
-            anchor="top"
-            style={{ minWidth: 200 }}
-          >
+          <Popup longitude={hoverInfo.lngLat[0]} latitude={hoverInfo.lngLat[1]} closeButton={false} closeOnClick={false} offset={10} anchor="top" style={{ minWidth: 200 }}>
             <Text>{hoverInfo.reason}</Text>
           </Popup>
         )}
 
-        {/* Popup for same location events (i.e. when an unclustered point groups multiple) */}
+        {/* Popup for same-location events (multi) */}
         {popupPosition && locationEvents.length > 1 && (
           <Popup
             longitude={popupPosition[0]}
@@ -470,12 +393,7 @@ const MapView: React.FC = () => {
                       setPopupPosition(null);
                       setLocationEvents([]);
                     }}
-                    style={{
-                      cursor: 'pointer',
-                      marginBottom: 6,
-                      textDecoration: 'underline',
-                      color: '#1677ff',
-                    }}
+                    style={{ cursor: 'pointer', marginBottom: 6, textDecoration: 'underline', color: '#1677ff' }}
                   >
                     {e.title} <br />
                     <small>{e.date}</small>
