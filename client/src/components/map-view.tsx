@@ -182,10 +182,13 @@ const MapView: React.FC = () => {
     const enter = () => (map.getCanvas().style.cursor = 'pointer');
     const leave = () => (map.getCanvas().style.cursor = '');
 
+    // Note: these listeners require layers to exist; attach after first render
     map.on('mouseenter', 'clusters', enter);
     map.on('mouseleave', 'clusters', leave);
     map.on('mouseenter', 'unclustered-point', enter);
     map.on('mouseleave', 'unclustered-point', leave);
+    map.on('mouseenter', 'unclustered-point-hit', enter);
+    map.on('mouseleave', 'unclustered-point-hit', leave);
     map.on('mouseenter', 'line-hover-target', enter);
     map.on('mouseleave', 'line-hover-target', leave);
 
@@ -194,6 +197,8 @@ const MapView: React.FC = () => {
       map.off('mouseleave', 'clusters', leave);
       map.off('mouseenter', 'unclustered-point', enter);
       map.off('mouseleave', 'unclustered-point', leave);
+      map.off('mouseenter', 'unclustered-point-hit', enter);
+      map.off('mouseleave', 'unclustered-point-hit', leave);
       map.off('mouseenter', 'line-hover-target', enter);
       map.off('mouseleave', 'line-hover-target', leave);
     };
@@ -234,7 +239,7 @@ const MapView: React.FC = () => {
           'unclustered-point',
           'line-hover-target',
         ]}
-        onMouseMove={(e) => {
+               onMouseMove={(e) => {
           const features = e.features ?? [];
           const hovered = features.find((f) => f.layer.id === 'line-hover-target');
           if ((hovered as any)?.properties?.reason) {
@@ -250,27 +255,28 @@ const MapView: React.FC = () => {
           const map = mapRef.current?.getMap();
           if (!map) return;
 
-          const features = e.features ?? [];
-          // Prioritise cluster circle, then unclustered point; ignore labels/lines
-          const clusterFeature = features.find((f) => f.layer.id === 'clusters') as any;
-          const pointFeature = features.find((f) => f.layer.id === 'unclustered-point') as any;
+          // Use queryRenderedFeatures to avoid interference from other interactive layers
+          const pointHits = map.queryRenderedFeatures(e.point, { layers: ['unclustered-point-hit','unclustered-point'] }) as any[];
+          const clusterHits = map.queryRenderedFeatures(e.point, { layers: ['clusters'] }) as any[];
 
-          // 1) Clicked a CLUSTER -> zoom in to expansion zoom
-          if (clusterFeature) {
-            const clusterId = clusterFeature.properties.cluster_id as number;
-            const source: any = map.getSource('events'); // GeoJSONSource
+          // 1) Prioritize cluster zoom when a cluster is hit
+          if (clusterHits.length) {
+            const feature = clusterHits[0] as any;
+            const clusterId = feature.properties.cluster_id as number;
+            const source: any = map.getSource('events');
             if (source && typeof source.getClusterExpansionZoom === 'function') {
               const result = source.getClusterExpansionZoom(clusterId);
-              const z = typeof result === 'number' ? result : await result; // handle number or Promise
-              map.easeTo({ center: clusterFeature.geometry.coordinates as [number, number], zoom: z });
+              const z = typeof result === 'number' ? result : await result;
+              map.easeTo({ center: feature.geometry.coordinates as [number, number], zoom: z });
             }
             return;
           }
 
-          // 2) Clicked an UNCLUSTERED POINT -> show single-event popup or list
-          if (pointFeature) {
-            const ids: string[] = pointFeature.properties.eventIds || [];
-            const [lng, lat] = pointFeature.geometry.coordinates as [number, number];
+          // 2) Otherwise, check for an unclustered point hit
+          if (pointHits.length) {
+            const feature = pointHits[0] as any;
+            const ids: string[] = feature.properties?.eventIds || [];
+            const [lng, lat] = feature.geometry.coordinates as [number, number];
 
             if (ids.length <= 1) {
               const ev = historicalEvents.find((x) => x.id === ids[0]);
@@ -358,6 +364,18 @@ const MapView: React.FC = () => {
               'circle-radius': 6,
               'circle-stroke-width': 2,
               'circle-stroke-color': '#ffffff',
+            }}
+          />
+
+          {/* Invisible larger hit area for easier clicking */}
+          <Layer
+            id="unclustered-point-hit"
+            type="circle"
+            filter={["!", ["has", "point_count"]] as any}
+            paint={{
+              'circle-color': '#000000',
+              'circle-opacity': 0.01,
+              'circle-radius': 14,
             }}
           />
         </Source>
