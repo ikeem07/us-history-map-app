@@ -1,7 +1,7 @@
-import React, { act, useEffect } from 'react';
-import { Map as LibreMap, Marker, Source, Layer, Popup, MapRef } from 'react-map-gl/maplibre';
-import { Card, Typography, Slider } from 'antd';
-import type { Feature, FeatureCollection, LineString } from 'geojson';
+import React, { useEffect } from 'react';
+import { Map as LibreMap, Source, Layer, Popup, MapRef } from 'react-map-gl/maplibre';
+import { Card, Typography } from 'antd';
+import type { Feature, FeatureCollection, LineString, Point } from 'geojson';
 import { Helmet } from 'react-helmet';
 
 import events from '../data/historical-events.json';
@@ -9,15 +9,11 @@ import TimelinePanel from './timeline-panel';
 import type { HistoricalEvent } from '../types/historical-event';
 import FilterSidebar from './filter-sidebar';
 
-
 const historicalEvents = events as HistoricalEvent[];
 
 const MapView: React.FC = () => {
   const [selectedEvent, setSelectedEvent] = React.useState<HistoricalEvent | null>(null);
-  const [hoverInfo, setHoverInfo] = React.useState<{
-    lngLat: [number, number];
-    reason: string;
-  } | null>(null);
+  const [hoverInfo, setHoverInfo] = React.useState<{ lngLat: [number, number]; reason: string } | null>(null);
   const [activeYear, setActiveYear] = React.useState<number | null>(null);
   const [selectedTags, setSelectedTags] = React.useState<string[]>([]);
   const [selectedPeople, setSelectedPeople] = React.useState<string[]>([]);
@@ -25,45 +21,16 @@ const MapView: React.FC = () => {
   const [popupPosition, setPopupPosition] = React.useState<[number, number] | null>(null);
 
   const mapRef = React.useRef<MapRef | null>(null);
-
   const { Title, Paragraph, Text } = Typography;
 
-  useEffect(() => {
-    if (!mapRef.current) return;
-
-    const map = mapRef.current.getMap();
-
-    const enterHandler = () => {
-      map.getCanvas().style.cursor = 'pointer';
-    }
-
-    const leaveHandler = () => {
-      map.getCanvas().style.cursor = '';
-    };
-
-    map.on('mouseenter', 'line-hover-target', enterHandler);
-    map.on('mouseleave', 'line-hover-target', leaveHandler);
-
-    return () => {
-      map.off('mouseenter', 'line-hover-target', enterHandler);
-      map.off('mouseleave', 'line-hover-target', leaveHandler);
-    };
-  }, [selectedEvent]);
-
+  // ———————————————————————————————————————————
+  // Filters -> visible events
+  // ———————————————————————————————————————————
   const visibleEvents = React.useMemo(() => {
     const filtered = historicalEvents.filter((event) => {
-      const matchesYear =
-        activeYear == null ||
-        new Date(event.date).getFullYear() === activeYear;
-    
-      const matchesTags =
-        selectedTags.length === 0 ||
-        (event.tags && event.tags.some((tag) => selectedTags.includes(tag)));
-
-      const matchesPeople =
-        selectedPeople.length === 0 ||
-        (event.people && event.people.some((p) => selectedPeople.includes(p)));
-
+      const matchesYear = activeYear == null || new Date(event.date).getFullYear() === activeYear;
+      const matchesTags = selectedTags.length === 0 || (event.tags && event.tags.some((t) => selectedTags.includes(t)));
+      const matchesPeople = selectedPeople.length === 0 || (event.people && event.people.some((p) => selectedPeople.includes(p)));
       return matchesYear && matchesTags && matchesPeople;
     });
 
@@ -77,71 +44,175 @@ const MapView: React.FC = () => {
         if (related) allVisible.set(id, related);
       }
     }
-
     return Array.from(allVisible.values());
-  }, [historicalEvents, activeYear, selectedTags, selectedPeople, selectedEvent])
+  }, [activeYear, selectedTags, selectedPeople, selectedEvent]);
 
   const allTags = React.useMemo(() => {
     const tagSet = new Set<string>();
-    historicalEvents.forEach(e => e.tags?.forEach(tag => tagSet.add(tag)));
+    historicalEvents.forEach((e) => e.tags?.forEach((t) => tagSet.add(t)));
     return Array.from(tagSet).sort();
-  }, [historicalEvents]);
+  }, []);
 
   const allPeople = React.useMemo(() => {
     const peopleSet = new Set<string>();
-    historicalEvents.forEach(e => e.people?.forEach(p => peopleSet.add(p)));
+    historicalEvents.forEach((e) => e.people?.forEach((p) => peopleSet.add(p)));
     return Array.from(peopleSet).sort();
-  }, [historicalEvents]);
+  }, []);
 
+  // ———————————————————————————————————————————
+  // Connection lines for selected + related
+  // ———————————————————————————————————————————
   const connectionFeatures: Feature<LineString>[] = selectedEvent
     ? selectedEvent.relatedEvents
-      .map(({ id: relatedId, reason }): Feature<LineString> | null => {
-        const target = visibleEvents.find((e) => e.id === relatedId);
-        if (!target) return null;
+        .map(({ id: relatedId, reason }): Feature<LineString> | null => {
+          const target = visibleEvents.find((e) => e.id === relatedId);
+          if (!target) return null;
+          const [lng1, lat1] = [selectedEvent.location.longitude, selectedEvent.location.latitude];
+          const [lng2, lat2] = [target.location.longitude, target.location.latitude];
 
-        const [lng1, lat1] = [selectedEvent.location.longitude, selectedEvent.location.latitude];
-        const [lng2, lat2] = [target.location.longitude, target.location.latitude];
+          let label = '';
+          if (lng1 < lng2) label = `${selectedEvent.title} <-> ${target.title}`;
+          else if (lng1 > lng2) label = `${target.title} <-> ${selectedEvent.title}`;
+          else if (lat1 < lat2) label = `${selectedEvent.title} <-> ${target.title}`;
+          else label = `${target.title} <-> ${selectedEvent.title}`;
 
-        let label = '';
-        if (lng1 < lng2) {
-          label = `${selectedEvent.title} <-> ${target.title}`;
-        } else if (lng1 > lng2) {
-          label = `${target.title} <-> ${selectedEvent.title}`;
-        } else if (lat1 < lat2) {
-          label = `${selectedEvent.title} <-> ${target.title}`;
-        } else {
-          label = `${target.title} <-> ${selectedEvent.title}`;
-        }
-
-        return {
-          type: 'Feature',
-          geometry: {
-            type: 'LineString',
-            coordinates: [
-              [lng1, lat1],
-              [lng2, lat2]
-            ]
-          },
-          properties: {
-            label,
-            reason
-          }
-        };
-      })
-      .filter((f): f is Feature<LineString> => f !== null)
+          return {
+            type: 'Feature',
+            geometry: { type: 'LineString', coordinates: [[lng1, lat1], [lng2, lat2]] },
+            properties: { label, reason },
+          };
+        })
+        .filter((f): f is Feature<LineString> => f !== null)
     : [];
 
-  const connectionData: FeatureCollection<LineString> = {
-    type: 'FeatureCollection',
-    features: connectionFeatures
-  };
+  const connectionData: FeatureCollection<LineString> = { type: 'FeatureCollection', features: connectionFeatures };
 
+  // ———————————————————————————————————————————
+  // Build one point per coordinate, with eventIds encoded as string
+  // (some GL workers serialize arrays -> strings; we control it explicitly)
+  // ———————————————————————————————————————————
+  type LocationPointProps = { eventIds: string; role: 'primary' | 'related' | 'default'; lng: number; lat: number };
+
+  const locationPoints: FeatureCollection<Point, LocationPointProps> = React.useMemo(() => {
+    const grouped = new Map<string, { lat: number; lng: number; eventIds: string[] }>();
+    for (const e of visibleEvents) {
+      const key = `${e.location.latitude},${e.location.longitude}`;
+      if (!grouped.has(key)) {
+        grouped.set(key, { lat: e.location.latitude, lng: e.location.longitude, eventIds: [e.id] });
+      } else {
+        grouped.get(key)!.eventIds.push(e.id);
+      }
+    }
+
+    const features: Feature<Point, LocationPointProps>[] = [];
+    const selectedId = selectedEvent?.id;
+    const relatedIds = new Set<string>(selectedEvent?.relatedEvents.map((r) => r.id) ?? []);
+
+    for (const { lat, lng, eventIds } of Array.from(grouped.values())) {
+      let role: LocationPointProps['role'] = 'default';
+      if (selectedId && eventIds.includes(selectedId)) role = 'primary';
+      else if (eventIds.some((id) => relatedIds.has(id))) role = 'related';
+
+      features.push({
+        type: 'Feature',
+        geometry: { type: 'Point', coordinates: [lng, lat] },
+        properties: { eventIds: eventIds.join(','), role, lng, lat },
+      });
+    }
+    return { type: 'FeatureCollection', features };
+  }, [visibleEvents, selectedEvent]);
+
+  // ———————————————————————————————————————————
+  // Pointer cursor for interactive layers
+  // ———————————————————————————————————————————
+  useEffect(() => {
+    if (!mapRef.current) return;
+    const map = mapRef.current.getMap();
+    
+    const enter = () => {
+      map.getCanvas().style.cursor = 'pointer';
+    };
+    const leave = () => {
+      map.getCanvas().style.cursor = '';
+    };
+
+    const setupCursorHandlers = () => {
+      console.log('Setting up cursor handlers...');
+      const layers = ['clusters', 'cluster-count', 'unclustered-point-hit', 'line-hover-target'];
+      
+      layers.forEach(layerId => {
+        // Remove existing listeners first to avoid duplicates
+        map.off('mouseenter', layerId, enter);
+        map.off('mouseleave', layerId, leave);
+        
+        // Add new listeners
+        map.on('mouseenter', layerId, enter);
+        map.on('mouseleave', layerId, leave);
+        console.log(`Cursor handlers set for layer: ${layerId}`);
+      });
+    };
+
+    // Wait for map to be ready and then set up handlers with a delay
+    const initHandlers = () => {
+      setTimeout(() => {
+        setupCursorHandlers();
+      }, 500); // Increased delay to ensure everything is loaded
+    };
+
+    if (map.loaded()) {
+      initHandlers();
+    } else {
+      map.once('load', initHandlers);
+    }
+
+    return () => {
+      const layers = ['clusters', 'cluster-count', 'unclustered-point-hit', 'line-hover-target'];
+      layers.forEach(layerId => {
+        map.off('mouseenter', layerId, enter);
+        map.off('mouseleave', layerId, leave);
+      });
+    };
+  }, []);
+
+  // Re-setup handlers when data changes
+  useEffect(() => {
+    if (!mapRef.current) return;
+    const map = mapRef.current.getMap();
+    
+    const enter = () => {
+      map.getCanvas().style.cursor = 'pointer';
+    };
+    const leave = () => {
+      map.getCanvas().style.cursor = '';
+    };
+
+    // Re-apply cursor handlers after data updates
+    const timeoutId = setTimeout(() => {
+      console.log('Re-setting up cursor handlers after data change...');
+      const layers = ['clusters', 'cluster-count', 'unclustered-point-hit', 'line-hover-target'];
+      layers.forEach(layerId => {
+        map.off('mouseenter', layerId, enter);
+        map.off('mouseleave', layerId, leave);
+        map.on('mouseenter', layerId, enter);
+        map.on('mouseleave', layerId, leave);
+      });
+    }, 200);
+
+    return () => {
+      clearTimeout(timeoutId);
+    };
+  }, [visibleEvents]);
+
+  // ———————————————————————————————————————————
+  // Map
+  // ———————————————————————————————————————————
   return (
     <>
       <Helmet>
         <title>History Map</title>
         <meta name="description" content="Explore historical events on an interactive map." />
       </Helmet>
+
       <FilterSidebar
         selectedTags={selectedTags}
         selectedPeople={selectedPeople}
@@ -154,107 +225,168 @@ const MapView: React.FC = () => {
           setSelectedPeople([]);
         }}
       />
+
       <LibreMap
         ref={mapRef}
         mapLib={import('maplibre-gl')}
         mapStyle="https://basemaps.cartocdn.com/gl/positron-gl-style/style.json"
-        initialViewState={{
-          latitude: 39.8283,
-          longitude: -98.5795,
-          zoom: 3.5
-        }}
+        initialViewState={{ latitude: 39.8283, longitude: -98.5795, zoom: 3.5 }}
         style={{ width: '100%', height: '100vh' }}
+        interactiveLayerIds={[
+          'clusters',
+          'cluster-count',
+          'unclustered-point-hit',
+          'line-hover-target',
+        ]}
         onMouseMove={(e) => {
           const features = e.features ?? [];
           const hovered = features.find((f) => f.layer.id === 'line-hover-target');
-          if (hovered?.properties?.reason) {
-            setHoverInfo({
-              lngLat: e.lngLat.toArray() as [number, number],
-              reason: hovered.properties.reason
-            })
+          if (hovered && (hovered as any).properties?.reason) {
+            setHoverInfo({ lngLat: e.lngLat.toArray() as [number, number], reason: (hovered as any).properties.reason as string });
           } else {
             setHoverInfo(null);
           }
         }}
-        interactiveLayerIds={['line-hover-target']}
+        onClick={async (e) => {
+          const map = mapRef.current?.getMap();
+          if (!map) return;
+
+          // Widen hit area to a small box for easier clicking
+          const pad = 10;
+          type Pt = [number, number];
+          const tl: Pt = [e.point.x - pad, e.point.y - pad];
+          const br: Pt = [e.point.x + pad, e.point.y + pad];
+          const bbox: [Pt, Pt] = [tl, br];
+
+          // 1) Clusters -> expand zoom
+          const clusterHits = map.queryRenderedFeatures(bbox as any, { layers: ['clusters'] }) as any[];
+          if (clusterHits.length) {
+            const f = clusterHits[0];
+            const clusterId = f.properties.cluster_id as number;
+            const src: any = map.getSource('events');
+            if (src && typeof src.getClusterExpansionZoom === 'function') {
+              // Support both callback-style and (number|Promise<number>) return
+              if (src.getClusterExpansionZoom.length === 2) {
+                src.getClusterExpansionZoom(clusterId, (_err: any, zoom: number) => {
+                  map.easeTo({ center: f.geometry.coordinates as [number, number], zoom });
+                });
+              } else {
+                const res = src.getClusterExpansionZoom(clusterId);
+                const zoom = typeof res === 'number' ? res : await res;
+                map.easeTo({ center: f.geometry.coordinates as [number, number], zoom });
+              }
+            }
+            return;
+          }
+
+          // 2) Unclustered points -> open single or multi list
+          const pointHits = map.queryRenderedFeatures(bbox as any, { layers: ['unclustered-point-hit'] }) as any[];
+          if (pointHits.length) {
+            const f = pointHits[0];
+            const ids = ((f.properties?.eventIds as string) || '').split(',').filter(Boolean);
+            const [lng, lat] = f.geometry.coordinates as [number, number];
+
+            if (ids.length <= 1) {
+              const ev = historicalEvents.find((x) => x.id === ids[0]);
+              if (ev) {
+                setSelectedEvent(ev);
+                setPopupPosition(null);
+                setLocationEvents([]);
+              }
+            } else {
+              const list = ids.map((id) => historicalEvents.find((x) => x.id === id)).filter((x): x is HistoricalEvent => !!x);
+              setLocationEvents(list);
+              setPopupPosition([lng, lat]);
+            }
+            return;
+          }
+        }}
       >
-        {/* Markers for each event */}
-        {visibleEvents.map((event) => {
-          const isPrimary = selectedEvent?.id === event.id;
-          const isRelated = selectedEvent?.relatedEvents.some((r) => r.id === event.id);
-          const color = isPrimary ? 'red' : isRelated ? 'blue' : 'gray';
+        {/* ——— Clustered Source for visible event locations ——— */}
+        <Source
+          id="events"
+          type="geojson"
+          data={locationPoints as unknown as FeatureCollection}
+          cluster={true}
+          clusterRadius={60}
+          clusterMaxZoom={12}
+          generateId={true}
+        >
+          {/* Clusters (bubbles) */}
+          <Layer
+            id="clusters"
+            type="circle"
+            filter={["has", "point_count"] as any}
+            paint={{
+              'circle-color': [
+                'step',
+                ['get', 'point_count'],
+                '#9ecae1',
+                10,
+                '#6baed6',
+                25,
+                '#3182bd',
+              ],
+              'circle-radius': [
+                'step',
+                ['get', 'point_count'],
+                16,
+                10,
+                20,
+                25,
+                26,
+              ],
+              'circle-stroke-width': 2,
+              'circle-stroke-color': '#ffffff',
+            }}
+          />
 
-          return (
-            <Marker
-              key={event.id}
-              latitude={event.location.latitude}
-              longitude={event.location.longitude}
-              anchor="center"
-            >
-              <div
-                title={event.title}
-                onClick={() => {
-                  const sameLocationEvents = visibleEvents.filter(e =>
-                    e.location.latitude === event.location.latitude &&
-                    e.location.longitude === event.location.longitude
-                  )
+          {/* Cluster count labels */}
+          <Layer
+            id="cluster-count"
+            type="symbol"
+            filter={["has", "point_count"] as any}
+            layout={{ 'text-field': ['get', 'point_count'] as any, 'text-size': 12, 'text-font': ['Open Sans Bold', 'Arial Unicode MS Bold'] }}
+            paint={{ 'text-color': '#08306b' }}
+          />
 
-                  if (sameLocationEvents.length === 1) {
-                    setSelectedEvent(sameLocationEvents[0]);
-                    setPopupPosition(null);
-                    setLocationEvents([]);
-                  } else {
-                    setLocationEvents(sameLocationEvents);
-                    setPopupPosition([event.location.longitude, event.location.latitude]);
-                  }
-                }}
-                style={{
-                  width: 12,
-                  height: 12,
-                  borderRadius: '50%',
-                  backgroundColor: color,
-                  cursor: 'pointer',
-                  border: '2px solid white'
-                }}
-              />
-            </Marker>
-          )
-        })}
+          {/* Unclustered points (one per coordinate; may represent multiple events) */}
+          <Layer
+            id="unclustered-point"
+            type="circle"
+            filter={["!", ["has", "point_count"]] as any}
+            paint={{
+              'circle-color': [
+                'match',
+                ['get', 'role'],
+                'primary', '#f5222d',
+                'related', '#1677ff',
+                /* default */ '#666666',
+              ],
+              'circle-radius': 6,
+              'circle-stroke-width': 2,
+              'circle-stroke-color': '#ffffff',
+            }}
+          />
+
+          {/* Invisible, larger hit area to make clicking easy */}
+          <Layer
+            id="unclustered-point-hit"
+            type="circle"
+            filter={["!", ["has", "point_count"]] as any}
+            paint={{ 'circle-color': '#000000', 'circle-opacity': 0.01, 'circle-radius': 14 }}
+          />
+        </Source>
 
         {/* Connection lines between events */}
         <Source id="connections" type="geojson" data={connectionData}>
-          {/* Invisible hover layer */}
+          <Layer id="line-hover-target" type="line" paint={{ 'line-color': '#000', 'line-opacity': 0, 'line-width': 10 }} />
+          <Layer id="lines" type="line" paint={{ 'line-color': '#333', 'line-width': 2 }} />
           <Layer
-            id='line-hover-target'
-            type='line'
-            paint={{
-              'line-color': '#000',
-              'line-opacity': 0,
-              'line-width': 10
-            }}
-          />
-          {/* Actual visible line layer */}
-          <Layer
-            id="lines"
-            type="line"
-            paint={{
-              'line-color': '#333',
-              'line-width': 2
-            }}
-          />
-          {/* Label layer */}
-          <Layer
-            id='line-labels'
-            type='symbol'
-            layout={{
-              'symbol-placement': 'line-center',
-              'text-field': ['get', 'label'],
-              'text-size': 13,
-              'text-anchor': 'top'
-            }}
-            paint={{
-              'text-color': 'rgba(12, 107, 3, 1)'
-            }}
+            id="line-labels"
+            type="symbol"
+            layout={{ 'symbol-placement': 'line-center', 'text-field': ['get', 'label'] as any, 'text-size': 13, 'text-anchor': 'top' }}
+            paint={{ 'text-color': 'rgba(12, 107, 3, 1)' }}
           />
         </Source>
 
@@ -270,15 +402,10 @@ const MapView: React.FC = () => {
             style={{ minWidth: 350 }}
           >
             <div style={{ minWidth: '100%' }}>
-              <Card 
-                size="small" 
-                style={{ boxShadow: 'none', margin: 0 }}
-                className='custom-ant-card'
-              >
+              <Card size="small" style={{ boxShadow: 'none', margin: 0 }} className="custom-ant-card">
                 <Title level={5} style={{ marginBottom: 8 }}>
-                  {selectedEvent.title} 
-                  <br />
-                  ({selectedEvent.date})
+                  {selectedEvent.title}
+                  <br />({selectedEvent.date})
                 </Title>
                 <Paragraph style={{ marginBottom: 8 }}>{selectedEvent.description}</Paragraph>
                 {selectedEvent.people?.length ? (
@@ -293,20 +420,12 @@ const MapView: React.FC = () => {
 
         {/* Hover relationship reason popup */}
         {hoverInfo && (
-          <Popup
-            longitude={hoverInfo.lngLat[0]}
-            latitude={hoverInfo.lngLat[1]}
-            closeButton={false}
-            closeOnClick={false}
-            offset={10}
-            anchor="top"
-            style={{ minWidth: 200 }}
-          >
+          <Popup longitude={hoverInfo.lngLat[0]} latitude={hoverInfo.lngLat[1]} closeButton={false} closeOnClick={false} offset={10} anchor="top" style={{ minWidth: 200 }}>
             <Text>{hoverInfo.reason}</Text>
           </Popup>
         )}
 
-        {/* Popup for same location events */}
+        {/* Popup for same-location events (multi) */}
         {popupPosition && locationEvents.length > 1 && (
           <Popup
             longitude={popupPosition[0]}
@@ -316,9 +435,9 @@ const MapView: React.FC = () => {
               setPopupPosition(null);
               setLocationEvents([]);
             }}
-            anchor='top'
+            anchor="top"
           >
-            <div style={{ maxWidth: 240 }}>
+            <div style={{ maxWidth: 260 }}>
               <strong>Events at this location:</strong>
               <ul style={{ paddingLeft: 16, marginTop: 8 }}>
                 {locationEvents.map((e) => (
@@ -329,12 +448,7 @@ const MapView: React.FC = () => {
                       setPopupPosition(null);
                       setLocationEvents([]);
                     }}
-                    style={{
-                      cursor: 'pointer',
-                      marginBottom: 6,
-                      textDecoration: 'underline',
-                      color: '#1677ff'
-                    }}
+                    style={{ cursor: 'pointer', marginBottom: 6, textDecoration: 'underline', color: '#1677ff' }}
                   >
                     {e.title} <br />
                     <small>{e.date}</small>
@@ -345,12 +459,8 @@ const MapView: React.FC = () => {
           </Popup>
         )}
       </LibreMap>
-      <TimelinePanel
-        year={activeYear}
-        onChange={setActiveYear}
-        min={1700}
-        max={2000}
-      />
+
+      <TimelinePanel year={activeYear} onChange={setActiveYear} min={1700} max={2000} />
     </>
   );
 };
