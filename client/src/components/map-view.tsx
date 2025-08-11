@@ -123,87 +123,6 @@ const MapView: React.FC = () => {
   }, [visibleEvents, selectedEvent]);
 
   // ———————————————————————————————————————————
-  // Pointer cursor for interactive layers
-  // ———————————————————————————————————————————
-  useEffect(() => {
-    if (!mapRef.current) return;
-    const map = mapRef.current.getMap();
-    
-    const enter = () => {
-      map.getCanvas().style.cursor = 'pointer';
-    };
-    const leave = () => {
-      map.getCanvas().style.cursor = '';
-    };
-
-    const setupCursorHandlers = () => {
-      console.log('Setting up cursor handlers...');
-      const layers = ['clusters', 'cluster-count', 'unclustered-point-hit', 'line-hover-target'];
-      
-      layers.forEach(layerId => {
-        // Remove existing listeners first to avoid duplicates
-        map.off('mouseenter', layerId, enter);
-        map.off('mouseleave', layerId, leave);
-        
-        // Add new listeners
-        map.on('mouseenter', layerId, enter);
-        map.on('mouseleave', layerId, leave);
-        console.log(`Cursor handlers set for layer: ${layerId}`);
-      });
-    };
-
-    // Wait for map to be ready and then set up handlers with a delay
-    const initHandlers = () => {
-      setTimeout(() => {
-        setupCursorHandlers();
-      }, 500); // Increased delay to ensure everything is loaded
-    };
-
-    if (map.loaded()) {
-      initHandlers();
-    } else {
-      map.once('load', initHandlers);
-    }
-
-    return () => {
-      const layers = ['clusters', 'cluster-count', 'unclustered-point-hit', 'line-hover-target'];
-      layers.forEach(layerId => {
-        map.off('mouseenter', layerId, enter);
-        map.off('mouseleave', layerId, leave);
-      });
-    };
-  }, []);
-
-  // Re-setup handlers when data changes
-  useEffect(() => {
-    if (!mapRef.current) return;
-    const map = mapRef.current.getMap();
-    
-    const enter = () => {
-      map.getCanvas().style.cursor = 'pointer';
-    };
-    const leave = () => {
-      map.getCanvas().style.cursor = '';
-    };
-
-    // Re-apply cursor handlers after data updates
-    const timeoutId = setTimeout(() => {
-      console.log('Re-setting up cursor handlers after data change...');
-      const layers = ['clusters', 'cluster-count', 'unclustered-point-hit', 'line-hover-target'];
-      layers.forEach(layerId => {
-        map.off('mouseenter', layerId, enter);
-        map.off('mouseleave', layerId, leave);
-        map.on('mouseenter', layerId, enter);
-        map.on('mouseleave', layerId, leave);
-      });
-    }, 200);
-
-    return () => {
-      clearTimeout(timeoutId);
-    };
-  }, [visibleEvents]);
-
-  // ———————————————————————————————————————————
   // Map
   // ———————————————————————————————————————————
   return (
@@ -245,6 +164,15 @@ const MapView: React.FC = () => {
             setHoverInfo({ lngLat: e.lngLat.toArray() as [number, number], reason: (hovered as any).properties.reason as string });
           } else {
             setHoverInfo(null);
+          }
+          
+          // Handle cursor for interactive elements
+          const map = mapRef.current?.getMap();
+          if (map) {
+            const interactiveFeatures = map.queryRenderedFeatures(e.point, {
+              layers: ['clusters', 'cluster-count', 'unclustered-point-hit', 'line-hover-target']
+            });
+            map.getCanvas().style.cursor = interactiveFeatures.length > 0 ? 'pointer' : '';
           }
         }}
         onClick={async (e) => {

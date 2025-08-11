@@ -97,3 +97,12 @@ button:focus-visible {
 .custom-ant-card {
   padding: 12px;
 }
+
+/* Ensure interactive map elements show pointer cursor */
+.maplibregl-canvas-container.maplibregl-interactive {
+  cursor: inherit;
+}
+
+.maplibregl-canvas-container.maplibregl-interactive:hover {
+  cursor: inherit;
+}
