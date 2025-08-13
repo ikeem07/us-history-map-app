@@ -1,6 +1,7 @@
 {
   "extends": "../tsconfig.base.json",
   "compilerOptions": {
+    "target": "ES2022",               // ✅ for modern JavaScript features
     "outDir": "dist",
     "rootDir": "src",
     "module": "ESNext",                 // ✅ for Vite bundler
