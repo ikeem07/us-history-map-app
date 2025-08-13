@@ -91,7 +91,12 @@ const MapView: React.FC = () => {
   // Build one point per coordinate, with eventIds encoded as string
   // (some GL workers serialize arrays -> strings; we control it explicitly)
   // ———————————————————————————————————————————
-  type LocationPointProps = { eventIds: string; role: 'primary' | 'related' | 'default'; lng: number; lat: number };
+  type LocationPointProps = { 
+    eventIds: string; 
+    role: 'primary' | 'related' | 'default'; 
+    lng: number; 
+    lat: number 
+  };
 
   const locationPoints: FeatureCollection<Point, LocationPointProps> = React.useMemo(() => {
     const grouped = new Map<string, { lat: number; lng: number; eventIds: string[] }>();
@@ -113,11 +118,18 @@ const MapView: React.FC = () => {
       if (selectedId && eventIds.includes(selectedId)) role = 'primary';
       else if (eventIds.some((id) => relatedIds.has(id))) role = 'related';
 
-      features.push({
-        type: 'Feature',
-        geometry: { type: 'Point', coordinates: [lng, lat] },
-        properties: { eventIds: eventIds.join(','), role, lng, lat },
-      });
+      for (let i = 0; i < eventIds.length; i++) {
+        features.push({
+          type: 'Feature',
+          geometry: { type: 'Point', coordinates: [lng, lat] },
+          properties: { 
+            eventIds: eventIds.join(','), 
+            role, 
+            lng, 
+            lat 
+          },
+        });
+      }
     }
     return { type: 'FeatureCollection', features };
   }, [visibleEvents, selectedEvent]);
@@ -179,6 +191,12 @@ const MapView: React.FC = () => {
           const map = mapRef.current?.getMap();
           if (!map) return;
 
+          // DEBUG: log any cluster features clicked
+          // const clusterFeatures = map.queryRenderedFeatures(e.point, { layers: ['clusters'] });
+          // if (clusterFeatures.length) {
+          //   console.log('Cluster props:', clusterFeatures[0].properties);
+          // }
+
           // Widen hit area to a small box for easier clicking
           const pad = 10;
           type Pt = [number, number];
@@ -239,6 +257,9 @@ const MapView: React.FC = () => {
           clusterRadius={60}
           clusterMaxZoom={12}
           generateId={true}
+          clusterProperties={{
+            total_events: ['+', ['accumulated'], ['get', 'eventCount']] as any
+          }}
         >
           {/* Clusters (bubbles) */}
           <Layer
@@ -248,21 +269,13 @@ const MapView: React.FC = () => {
             paint={{
               'circle-color': [
                 'step',
-                ['get', 'point_count'],
-                '#9ecae1',
-                10,
-                '#6baed6',
-                25,
-                '#3182bd',
+                ['coalesce', ['get', 'total_events'], ['get', 'point_count']],
+                '#9ecae1', 10, '#6baed6', 25, '#3182bd',
               ],
               'circle-radius': [
                 'step',
-                ['get', 'point_count'],
-                16,
-                10,
-                20,
-                25,
-                26,
+                ['coalesce', ['get', 'total_events'], ['get', 'point_count']],
+                16, 10, 20, 25, 26,
               ],
               'circle-stroke-width': 2,
               'circle-stroke-color': '#ffffff',
@@ -274,7 +287,14 @@ const MapView: React.FC = () => {
             id="cluster-count"
             type="symbol"
             filter={["has", "point_count"] as any}
-            layout={{ 'text-field': ['get', 'point_count'] as any, 'text-size': 12, 'text-font': ['Open Sans Bold', 'Arial Unicode MS Bold'] }}
+            layout={{ 
+              'text-field': [
+                'to-string', 
+                ['coalesce', ['get', 'total_events'], ['get', 'point_count_abbreviated']]
+              ] as any,
+              'text-size': 12,
+              'text-font': ['Open Sans Bold', 'Arial Unicode MS Bold']
+            }}
             paint={{ 'text-color': '#08306b' }}
           />
 
