@@ -257,9 +257,6 @@ const MapView: React.FC = () => {
           clusterRadius={60}
           clusterMaxZoom={12}
           generateId={true}
-          clusterProperties={{
-            total_events: ['+', ['accumulated'], ['get', 'eventCount']] as any
-          }}
         >
           {/* Clusters (bubbles) */}
           <Layer
