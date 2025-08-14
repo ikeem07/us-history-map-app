@@ -11,6 +11,18 @@ import FilterSidebar from './filter-sidebar';
 
 const historicalEvents = events as HistoricalEvent[];
 
+// Merge “nearly same” coordinates when building buckets.
+// 5 decimal places ≈ ~1.1 meters at the equator.
+const GROUP_PRECISION = 5;
+const round = (n: number, p = GROUP_PRECISION) => {
+  const k = Math.pow(10, p);
+  return Math.round(n * k) / k;
+};
+
+// Tune cluster visuals/behavior for dense maps.
+const CLUSTER_RADIUS = 70; // pixels
+const CLUSTER_MAX_ZOOM = 13; // stop clustering beyond this zoom
+
 const MapView: React.FC = () => {
   const [selectedEvent, setSelectedEvent] = React.useState<HistoricalEvent | null>(null);
   const [hoverInfo, setHoverInfo] = React.useState<{ lngLat: [number, number]; reason: string } | null>(null);
@@ -90,45 +102,67 @@ const MapView: React.FC = () => {
   // ———————————————————————————————————————————
   // Build clustered points
   // Strategy: one feature PER EVENT (so point_count == true event total),
-  // but each feature carries the full eventIds list for that coordinate.
+  // but each feature carries the full eventIds list for that (merged/averaged) coordinate.
+  // Also merges “near-duplicate” coords using GROUP_PRECISION and averages lat/lng.
   // ———————————————————————————————————————————
   type LocationPointProps = {
-    eventIds: string;       // all ids at this coordinate, comma-delimited
+    eventIds: string;       // all ids at this merged coordinate, comma-delimited
     role: 'primary' | 'related' | 'default';
     lng: number;
     lat: number;
   };
 
   const locationPoints: FeatureCollection<Point, LocationPointProps> = React.useMemo(() => {
-    // group by coordinate
-    const grouped = new Map<string, { lat: number; lng: number; ids: string[] }>();
+    // 1) Group by rounded coordinate, keeping sums to compute a centroid for near-duplicates
+    const grouped = new Map<
+      string,
+      { latSum: number; lngSum: number; count: number; ids: string[] }
+    >();
+
     for (const e of visibleEvents) {
-      const key = `${e.location.latitude},${e.location.longitude}`;
+      const rlat = round(e.location.latitude);
+      const rlng = round(e.location.longitude);
+      const key = `${rlat},${rlng}`;
+
       const g = grouped.get(key);
-      if (g) g.ids.push(e.id);
-      else grouped.set(key, { lat: e.location.latitude, lng: e.location.longitude, ids: [e.id] });
+      if (g) {
+        g.ids.push(e.id);
+        g.latSum += e.location.latitude;
+        g.lngSum += e.location.longitude;
+        g.count += 1;
+      } else {
+        grouped.set(key, {
+          ids: [e.id],
+          latSum: e.location.latitude,
+          lngSum: e.location.longitude,
+          count: 1,
+        });
+      }
     }
 
+    // 2) Emit features: one *per event* at the averaged coordinate
     const features: Feature<Point, LocationPointProps>[] = [];
     const selectedId = selectedEvent?.id;
-    const related = new Set<string>(selectedEvent?.relatedEvents.map(r => r.id) ?? []);
+    const related = new Set<string>(selectedEvent?.relatedEvents.map((r) => r.id) ?? []);
 
-    for (const { lat, lng, ids } of grouped.values()) {
+    for (const { latSum, lngSum, count, ids } of grouped.values()) {
+      const lat = latSum / count;
+      const lng = lngSum / count;
+
       let role: LocationPointProps['role'] = 'default';
       if (selectedId && ids.includes(selectedId)) role = 'primary';
-      else if (ids.some(id => related.has(id))) role = 'related';
+      else if (ids.some((id) => related.has(id))) role = 'related';
 
-      // push ONE feature per event -> clusters count true events
       for (let i = 0; i < ids.length; i++) {
         features.push({
           type: 'Feature',
           geometry: { type: 'Point', coordinates: [lng, lat] },
           properties: {
-            eventIds: ids.join(','), // keep full list for the click popup
+            eventIds: ids.join(','), // full list for the click popup
             role,
             lng,
-            lat
-          }
+            lat,
+          },
         });
       }
     }
@@ -251,8 +285,8 @@ const MapView: React.FC = () => {
           type="geojson"
           data={locationPoints as unknown as FeatureCollection}
           cluster={true}
-          clusterRadius={60}
-          clusterMaxZoom={12}
+          clusterRadius={CLUSTER_RADIUS}
+          clusterMaxZoom={CLUSTER_MAX_ZOOM}
           generateId={true}
         >
           {/* Cluster bubbles */}
