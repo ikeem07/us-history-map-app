@@ -8,6 +8,7 @@ import events from '../data/historical-events.json';
 import TimelinePanel from './timeline-panel';
 import type { HistoricalEvent } from '../types/historical-event';
 import FilterSidebar from './filter-sidebar';
+import MapLegend from './map-legend';
 
 const historicalEvents = events as HistoricalEvent[];
 
@@ -31,6 +32,7 @@ const MapView: React.FC = () => {
   const [selectedPeople, setSelectedPeople] = React.useState<string[]>([]);
   const [locationEvents, setLocationEvents] = React.useState<HistoricalEvent[]>([]);
   const [popupPosition, setPopupPosition] = React.useState<[number, number] | null>(null);
+  const [legendCollapsed, setLegendCollapsed] = React.useState<boolean>(false);
 
   const mapRef = React.useRef<MapRef | null>(null);
   const { Title, Paragraph, Text } = Typography;
@@ -191,6 +193,12 @@ const MapView: React.FC = () => {
           setSelectedTags([]);
           setSelectedPeople([]);
         }}
+      />
+
+      {/* Map Legend overlay (bottom right) */}
+      <MapLegend 
+        collapsed={legendCollapsed} 
+        onToggle={() => setLegendCollapsed((c) => !c)}
       />
 
       <LibreMap
