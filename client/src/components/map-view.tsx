@@ -26,7 +26,7 @@ import {
   RADIUS_LARGE,
   CLUSTER_RADIUS,
   CLUSTER_MAX_ZOOM,
-} from './map-constants';
+} from '../constants/map';
 
 const historicalEvents = events as HistoricalEvent[];
 

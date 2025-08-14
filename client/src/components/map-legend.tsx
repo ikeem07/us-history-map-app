@@ -1,7 +1,7 @@
 import React from 'react';
 import { Card, Typography, Button } from 'antd';
 import { InfoCircleOutlined, DragOutlined, MinusOutlined, PlusOutlined } from '@ant-design/icons'; 
-import { CLUSTER_STEP_1, CLUSTER_STEP_2 } from './map-constants';
+import { CLUSTER_STEP_1, CLUSTER_STEP_2 } from '../constants/map';
 
 const { Text } = Typography;
 
