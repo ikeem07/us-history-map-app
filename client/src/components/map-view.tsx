@@ -9,6 +9,24 @@ import TimelinePanel from './timeline-panel';
 import type { HistoricalEvent } from '../types/historical-event';
 import FilterSidebar from './filter-sidebar';
 import MapLegend from './map-legend';
+import { 
+  COLOR_EVENT_PRIMARY,
+  COLOR_EVENT_RELATED,
+  COLOR_EVENT_DEFAULT,
+  COLOR_LINE,
+  COLOR_LINE_HOVER_TARGET,
+  COLOR_LABEL,
+  COLOR_CLUSTER_LOW,
+  COLOR_CLUSTER_MID,
+  COLOR_CLUSTER_HIGH,
+  CLUSTER_STEP_1,
+  CLUSTER_STEP_2,
+  RADIUS_SMALL,
+  RADIUS_MED,
+  RADIUS_LARGE,
+  CLUSTER_RADIUS,
+  CLUSTER_MAX_ZOOM,
+} from './map-constants';
 
 const historicalEvents = events as HistoricalEvent[];
 
@@ -19,10 +37,6 @@ const round = (n: number, p = GROUP_PRECISION) => {
   const k = Math.pow(10, p);
   return Math.round(n * k) / k;
 };
-
-// Tune cluster visuals/behavior for dense maps.
-const CLUSTER_RADIUS = 70; // pixels
-const CLUSTER_MAX_ZOOM = 13; // stop clustering beyond this zoom
 
 const MapView: React.FC = () => {
   const [selectedEvent, setSelectedEvent] = React.useState<HistoricalEvent | null>(null);
@@ -199,6 +213,16 @@ const MapView: React.FC = () => {
       <MapLegend 
         collapsed={legendCollapsed} 
         onToggle={() => setLegendCollapsed((c) => !c)}
+        colors={{
+          clusterLow: COLOR_CLUSTER_LOW,
+          clusterMid: COLOR_CLUSTER_MID,
+          clusterHigh: COLOR_CLUSTER_HIGH,
+          eventDefault: COLOR_EVENT_DEFAULT,
+          eventPrimary: COLOR_EVENT_PRIMARY,
+          eventRelated: COLOR_EVENT_RELATED,
+          lineColor: COLOR_LINE,
+          labelColor: COLOR_LABEL
+        }}
       />
 
       <LibreMap
@@ -306,12 +330,12 @@ const MapView: React.FC = () => {
               'circle-color': [
                 'step',
                 ['get', 'point_count'],
-                '#9ecae1', 10, '#6baed6', 25, '#3182bd',
+                COLOR_CLUSTER_LOW, CLUSTER_STEP_1, COLOR_CLUSTER_MID, CLUSTER_STEP_2, COLOR_CLUSTER_HIGH,
               ],
               'circle-radius': [
                 'step',
                 ['get', 'point_count'],
-                16, 10, 20, 25, 26,
+                RADIUS_SMALL, CLUSTER_STEP_1, RADIUS_MED, CLUSTER_STEP_2, RADIUS_LARGE,
               ],
               'circle-stroke-width': 2,
               'circle-stroke-color': '#ffffff',
@@ -340,9 +364,9 @@ const MapView: React.FC = () => {
               'circle-color': [
                 'match',
                 ['get', 'role'],
-                'primary', '#f5222d',
-                'related', '#1677ff',
-                /* default */ '#666666',
+                'primary', COLOR_EVENT_PRIMARY,
+                'related', COLOR_EVENT_RELATED,
+                /* default */ COLOR_EVENT_DEFAULT,
               ],
               'circle-radius': 6,
               'circle-stroke-width': 2,
@@ -361,13 +385,13 @@ const MapView: React.FC = () => {
 
         {/* Connection lines between events */}
         <Source id="connections" type="geojson" data={connectionData}>
-          <Layer id="line-hover-target" type="line" paint={{ 'line-color': '#000', 'line-opacity': 0, 'line-width': 10 }} />
-          <Layer id="lines" type="line" paint={{ 'line-color': '#333', 'line-width': 2 }} />
+          <Layer id="line-hover-target" type="line" paint={{ 'line-color': COLOR_LINE_HOVER_TARGET, 'line-opacity': 0, 'line-width': 10 }} />
+          <Layer id="lines" type="line" paint={{ 'line-color': COLOR_LINE, 'line-width': 2 }} />
           <Layer
             id="line-labels"
             type="symbol"
             layout={{ 'symbol-placement': 'line-center', 'text-field': ['get', 'label'] as any, 'text-size': 13, 'text-anchor': 'top' }}
-            paint={{ 'text-color': 'rgba(12, 107, 3, 1)' }}
+            paint={{ 'text-color': COLOR_LABEL }}
           />
         </Source>
 

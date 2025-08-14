@@ -67,6 +67,7 @@ client/
 │   │   └── react.svg         # React logo
 │   ├── components/            # React components
 │   │   ├── filter-sidebar.tsx # Event filtering sidebar
+│   │   ├── map-constants.ts
 │   │   ├── map-legend.tsx     # Map legend component
 │   │   ├── map-view.tsx       # Main map visualization
 │   │   └── timeline-panel.tsx # Timeline navigation
