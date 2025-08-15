@@ -153,12 +153,15 @@ const MapLegend: React.FC<MapLegendProps> = ({
               onClick={onToggle}
               icon={collapsed ? <PlusOutlined /> : <MinusOutlined />}
               title={collapsed ? "Expand" : "Collapse"}
+              style={{ marginRight: 1 }}
             />
           </div>
         }
         style={{ width: 260, boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}
-        headStyle={{ padding: '8px 12px' }}
-        bodyStyle={{ padding: collapsed ? 0 : 12, display: collapsed ? 'none' : 'block' }}
+        styles={{
+          header: { padding: '8px 12px' },
+          body: { padding: collapsed ? 0 : 12, display: collapsed ? 'none' : 'block' },
+        }}
       >
         {/* Clusters */}
         <div style={{ marginBottom: 8 }}>
