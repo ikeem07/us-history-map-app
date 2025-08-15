@@ -3,8 +3,7 @@ import { Card, Typography, Button } from 'antd';
 import { InfoCircleOutlined, DragOutlined, MinusOutlined, PlusOutlined } from '@ant-design/icons'; 
 import {
   COLOR_EVENT_PRIMARY, COLOR_EVENT_RELATED, COLOR_EVENT_DEFAULT,
-  COLOR_LINE, COLOR_LABEL,
-  COLOR_CLUSTER_LOW, COLOR_CLUSTER_MID, COLOR_CLUSTER_HIGH,
+  COLOR_LINE, COLOR_LABEL, COLOR_CLUSTER_LOW, COLOR_CLUSTER_MID, COLOR_CLUSTER_HIGH,
   CLUSTER_STEP_1, CLUSTER_STEP_2
 } from '../constants/map';
 
@@ -48,15 +47,6 @@ const lineSwatch = (color: string): React.CSSProperties => ({
   marginRight: 8
 });
 
-const labelChip = (color: string): React.CSSProperties => ({
-  display: 'inline-block',
-  padding: '1px 6px',
-  background: 'rgba(0,0,0,0.01)',
-  borderRadius: 4,
-  border: '1px solid rgba(0,0,0,0.08)',
-  color,
-})
-
 const MapLegend: React.FC<MapLegendProps> = ({ 
   collapsed, 
   onToggle, 
@@ -73,44 +63,60 @@ const MapLegend: React.FC<MapLegendProps> = ({
     return { x: -right, y: top };
   });
   const [dragging, setDragging] = React.useState(false);
-  const startRef = React.useRef<{ x: number; y: number } | null>(null);
+  const dragStartRef = React.useRef<{ x: number; y: number } | null>(null);
 
+  // Insure legend stays within viewport on screen resize
+  const clampToViewport = React.useCallback(() => {
+    const node = containerRef.current;
+    if (!node) return;
+    const margin = 8; // margin from edges
+    const w = node.offsetWidth;
+    const h = node.offsetHeight;
+    const maxX = Math.max(margin, window.innerWidth - w - margin);
+    const maxY = Math.max(margin, window.innerHeight - h - margin);
+
+    setPos((p) => ({
+      x: Math.max(margin, Math.min(p.x, maxX)),
+      y: Math.max(margin, Math.min(p.y, maxY))
+    }));
+  }, []);
+
+  // Convert initial “right-based” x to absolute left after first render,
+  // then clamp to viewport.
   React.useEffect(() => {
-    // On first mount, convert negative x (meaning "from right") to absolute left
-    if (containerRef.current && pos.x < 0) {
-      const width = containerRef.current.offsetWidth;
-      setPos({ x: window.innerWidth - (Math.abs(pos.x) + width), y: pos.y });
+    const node = containerRef.current;
+    if (!node) return;
+
+    if (pos.x < 0) {
+      const margin = Math.abs(pos.x);
+      const left = window.innerWidth - (node.offsetWidth + margin);
+      setPos({ x: Math.max(8, left), y: pos.y });
+    } else {
+      clampToViewport();
     }
   }, []);
 
   const onMouseDown = (e: React.MouseEvent) => {
     setDragging(true);
-    startRef.current = { x: e.clientX - pos.x, y: e.clientY - pos.y };
+    dragStartRef.current = { x: e.clientX - pos.x, y: e.clientY - pos.y };
     // avoid text selection with dragging
     document.body.style.userSelect = 'none';
   }
 
-  const onMouseMove = (e: MouseEvent) => {
-    if (!dragging || !startRef.current) return;
-    const nx = e.clientX - startRef.current.x;
-    const ny = e.clientY - startRef.current.y;
-    // keep within viewport
-    const node = containerRef.current;
-    const w = node?.offsetWidth ?? 0;
-    const h = node?.offsetHeight ?? 0;
-    const maxX = window.innerWidth - w - 8;
-    const maxY = window.innerHeight - h - 8;
-    setPos({
-      x: Math.max(8, Math.min(nx, maxX)),
-      y: Math.max(8, Math.min(ny, maxY))
-    });
-  };
+  const onMouseMove = React.useCallback((e: MouseEvent) => {
+    if (!dragging || !dragStartRef.current) return;
+    const nx = e.clientX - dragStartRef.current.x;
+    const ny = e.clientY - dragStartRef.current.y;
+    setPos({ x: nx, y: ny });
+  }, [dragging]);
 
-  const onMouseUp = () => {
+  const onMouseUp = React.useCallback(() => {
+    if (!dragging) return;
     setDragging(false);
-    startRef.current = null;
+    dragStartRef.current = null;
     document.body.style.userSelect = '';
-  };
+    clampToViewport();
+  }, [dragging, clampToViewport]);
 
   React.useEffect(() => {
     window.addEventListener('mousemove', onMouseMove);
@@ -119,7 +125,36 @@ const MapLegend: React.FC<MapLegendProps> = ({
       window.removeEventListener('mousemove', onMouseMove);
       window.removeEventListener('mouseup', onMouseUp);
     };
-  }, [dragging]);
+  }, [onMouseMove, onMouseUp]);
+
+  // Clamp on window resize (e.g., user resizes or rotates)
+  React.useEffect(() => {
+    let raf = 0;
+    const onResize = () => {
+      // throttle with rAF
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(clampToViewport);
+    };
+    window.addEventListener('resize', onResize);
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener('resize', onResize);
+    };
+  }, [clampToViewport]);
+
+  // Clamp when the legend content size changes (collapse/expand, or content wraps)
+  React.useEffect(() => {
+    const node = containerRef.current;
+    if (!node || typeof ResizeObserver === 'undefined') return;
+
+    const ro = new ResizeObserver(() => {
+      // Use rAF to avoid layout thrash during rapid size changes
+      requestAnimationFrame(clampToViewport);
+    });
+    ro.observe(node);
+
+    return () => ro.disconnect();
+  }, [clampToViewport]);
 
   return (
     <div
