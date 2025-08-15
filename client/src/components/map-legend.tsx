@@ -20,6 +20,8 @@ const DEFAULT_COLORS = {
   labelColor: COLOR_LABEL,
 };
 
+const DRAG_VIEWPORT_MARGIN = 8;
+
 export type MapLegendProps = {
   collapsed?: boolean;
   onToggle: () => void;
@@ -107,7 +109,18 @@ const MapLegend: React.FC<MapLegendProps> = ({
     if (!dragging || !dragStartRef.current) return;
     const nx = e.clientX - dragStartRef.current.x;
     const ny = e.clientY - dragStartRef.current.y;
-    setPos({ x: nx, y: ny });
+
+    // Clamp to viewport while dragging
+    const node = containerRef.current;
+    const w = node?.offsetWidth ?? 0;
+    const h = node?.offsetHeight ?? 0;
+    const maxX = Math.max(DRAG_VIEWPORT_MARGIN, window.innerWidth - w - DRAG_VIEWPORT_MARGIN);
+    const maxY = Math.max(DRAG_VIEWPORT_MARGIN, window.innerHeight - h - DRAG_VIEWPORT_MARGIN);
+
+    const clampedX = Math.max(DRAG_VIEWPORT_MARGIN, Math.min(nx, maxX));
+    const clampedY = Math.max(DRAG_VIEWPORT_MARGIN, Math.min(ny, maxY));
+
+    setPos({ x: clampedX, y: clampedY });
   }, [dragging]);
 
   const onMouseUp = React.useCallback(() => {
