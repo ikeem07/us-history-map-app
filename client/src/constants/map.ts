@@ -34,3 +34,11 @@ export const roundCoord = (n: number, p = GROUP_PRECISION) => {
   const k = Math.pow(10, p);
   return Math.round(n * k) / k;
 };
+
+// Layers the map treats as interactive for pointer/queries
+export const INTERACTIVE_LAYERS = [
+  'clusters',
+  'cluster-count',
+  'unclustered-point-hit',
+  'line-hover-target',
+] as const;

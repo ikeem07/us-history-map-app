@@ -1,23 +1,30 @@
 import React from 'react';
 import { Card, Typography, Button } from 'antd';
 import { InfoCircleOutlined, DragOutlined, MinusOutlined, PlusOutlined } from '@ant-design/icons'; 
-import { CLUSTER_STEP_1, CLUSTER_STEP_2 } from '../constants/map';
+import {
+  COLOR_EVENT_PRIMARY, COLOR_EVENT_RELATED, COLOR_EVENT_DEFAULT,
+  COLOR_LINE, COLOR_LABEL,
+  COLOR_CLUSTER_LOW, COLOR_CLUSTER_MID, COLOR_CLUSTER_HIGH,
+  CLUSTER_STEP_1, CLUSTER_STEP_2
+} from '../constants/map';
 
 const { Text } = Typography;
+
+const DEFAULT_COLORS = {
+  clusterLow: COLOR_CLUSTER_LOW,
+  clusterMid: COLOR_CLUSTER_MID,
+  clusterHigh: COLOR_CLUSTER_HIGH,
+  eventDefault: COLOR_EVENT_DEFAULT,
+  eventPrimary: COLOR_EVENT_PRIMARY,
+  eventRelated: COLOR_EVENT_RELATED,
+  lineColor: COLOR_LINE,
+  labelColor: COLOR_LABEL,
+};
 
 export type MapLegendProps = {
   collapsed?: boolean;
   onToggle: () => void;
-  colors: {
-    clusterLow: string;
-    clusterMid: string;
-    clusterHigh: string;
-    eventDefault: string;
-    eventPrimary: string;
-    eventRelated: string;
-    lineColor: string;
-    labelColor: string;
-  };
+  colors?: typeof DEFAULT_COLORS;
   initialPosition?: { top?: number; right?: number; left?: number; bottom?: number };
 }
 
@@ -50,7 +57,12 @@ const labelChip = (color: string): React.CSSProperties => ({
   color,
 })
 
-const MapLegend: React.FC<MapLegendProps> = ({ collapsed, onToggle, colors, initialPosition }) => {
+const MapLegend: React.FC<MapLegendProps> = ({ 
+  collapsed, 
+  onToggle, 
+  colors = DEFAULT_COLORS, 
+  initialPosition 
+}) => {
   // simple draggable position managed locally
   const containerRef = React.useRef<HTMLDivElement | null>(null);
   const [pos, setPos] = React.useState<{ x: number; y: number }>(() => {
