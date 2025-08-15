@@ -157,7 +157,7 @@ const MapLegend: React.FC<MapLegendProps> = ({
             />
           </div>
         }
-        style={{ width: 260, boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}
+        style={{ width: 200, boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}
         styles={{
           header: { padding: '8px 12px' },
           body: { padding: collapsed ? 0 : 12, display: collapsed ? 'none' : 'block' },
