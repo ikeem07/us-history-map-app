@@ -195,7 +195,28 @@ const MapLegend: React.FC<MapLegendProps> = ({
             <span style={lineSwatch(colors.lineColor)} /> <Text>Connection line</Text>
           </div>
           <div style={{ display: 'flex', alignItems: 'center' }}>
-            <span style={labelChip(colors.labelColor)}>Connection Label</span>
+            <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginRight: 8 }}>
+              {/* Line above */}
+              <span 
+                style={{
+                  width: 28,
+                  height: 2,
+                  borderTop: `2px solid ${colors.lineColor}`,
+                  marginBottom: 2
+                }}
+              />
+              {/* Text below */}
+              <span
+                style={{
+                  fontSize: 10,
+                  color: colors.labelColor,
+                  lineHeight: '10px',
+                }}
+              >
+                Label
+              </span>
+            </span>
+            <Text>Connection label</Text>
           </div>
         </div>
       </Card>
