@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Slider, InputNumber, Typography, Button } from 'antd';
+import { Slider, InputNumber, Typography, Button, Drawer, Space } from 'antd';
 
 const { Text } = Typography;
 
@@ -8,9 +8,22 @@ export type TimelinePanelProps = {
   min?: number;
   max?: number;
   onChange: (newYear: number | null) => void;
+  variant?: 'inline' | 'drawer';
+  open?: boolean;       // used when variant === 'drawer'
+  onClose?: () => void; // used when variant === 'drawer'
+  heightVh?: number;    // bottom sheet height (viewport %)
 };
 
-const TimelinePanel: React.FC<TimelinePanelProps> = ({ year, onChange, min = 1700, max = 2000 }) => {
+const TimelinePanel: React.FC<TimelinePanelProps> = ({ 
+  year, 
+  onChange, 
+  min = 1700, 
+  max = 2000,
+  variant = 'inline',
+  open = false,
+  onClose,
+  heightVh = 42 
+}) => {
   const visibleRange = 150;
   const [windowStart, setWindowStart] = useState(min);
   const windowEnd = Math.min(windowStart + visibleRange, max);
@@ -46,11 +59,15 @@ const TimelinePanel: React.FC<TimelinePanelProps> = ({ year, onChange, min = 170
           }
         });
       }, 1000);
-    } else {
-      if (playRef.current) clearInterval(playRef.current);
+    } else if (playRef.current) {
+      clearInterval(playRef.current);
+      playRef.current = null;
     }
     return () => {
-      if (playRef.current) clearInterval(playRef.current);
+      if (playRef.current) {
+        clearInterval(playRef.current)
+        playRef.current = null;
+      };
     };
   }, [isPlaying, windowStart, windowEnd, year, onChange]);
 
@@ -61,12 +78,107 @@ const TimelinePanel: React.FC<TimelinePanelProps> = ({ year, onChange, min = 170
     }
   }, [year, windowStart, windowEnd, min, max]);
 
-  // Generate dynamic marks for visible range
-  const marks: Record<number, string> = {};
-  for (let y = windowStart; y <= windowEnd; y += 10) {
-    marks[y] = `${y}`;
+  // Marks: every-10-years for inline;
+  // use sparser marks in drawer for readability on phones.
+  const makeMarks = (dense: boolean) => {
+    const marks: Record<number, string> = {};
+    const step = dense ? 10 : 25;
+    for (let y = windowStart; y <= windowEnd; y += step) marks[y] = `${y}`;
+    marks[windowStart] = `${windowStart}`;
+    marks[windowEnd] = `${windowEnd}`;
+    return marks;
   }
 
+  const Controls = (
+    <Space align="center" style={{ width: '100%', justifyContent: 'space-between', marginBottom: 8 }}>
+      <Space align="center" wrap>
+        <Text strong>Year:</Text>
+        <InputNumber
+          min={min}
+          max={max}
+          value={year ?? undefined}
+          onChange={(value) => {
+            if (typeof value === 'number') {
+              setPlaybackYear(null);
+              onChange(value);
+            }
+          }}
+          style={{ width: 100 }}
+          size={variant === 'drawer' ? 'large' : 'middle'}
+        />
+        <Button onClick={() => shiftWindow('left')} size={variant === 'drawer' ? 'large' : 'middle'}>
+          {'←'}
+        </Button>
+        <Button onClick={() => shiftWindow('right')} size={variant === 'drawer' ? 'large' : 'middle'}>
+          {'→'}
+        </Button>
+      </Space>
+
+      <Space>
+        <Button
+          onClick={() => {
+            setIsPlaying(false);
+            onChange(null);
+          }}
+          size={variant === 'drawer' ? 'large' : 'middle'}
+        >
+          Clear
+        </Button>
+        <Button onClick={togglePlay} type="primary" size={variant === 'drawer' ? 'large' : 'middle'}>
+          {isPlaying ? 'Pause' : 'Play'}
+        </Button>
+      </Space>
+    </Space>
+  );
+
+  const SliderEl = (
+    <Slider
+      min={windowStart}
+      max={windowEnd}
+      step={1}
+      value={year ?? windowStart}
+      onChange={(value) => {
+        setPlaybackYear(null);
+        onChange(value as number);
+      }}
+      marks={variant === 'drawer' ? makeMarks(false) : makeMarks(true)}
+      style={{ flex: 1 }}
+      tooltip={{ open: false }}
+      // slightly larger hit targets in drawer
+      styles={
+        variant === 'drawer'
+          ? { handle: { width: 20, height: 20, marginTop: -8 }, rail: { height: 6 }, track: { height: 6 } }
+          : undefined
+      }
+    />
+  );
+
+  const body = (
+    <div style={{ padding: 12 }}>
+      {Controls}
+      {SliderEl}
+    </div>
+  );
+
+  if (variant === 'drawer') {
+    // Mobile bottom sheet
+    return (
+      <Drawer
+        placement="bottom"
+        open={open}
+        onClose={onClose}
+        height={`${heightVh}vh`}
+        title="Timeline"
+        getContainer={false}               // render inside page to avoid z-index surprises
+        maskStyle={{ background: 'rgba(0,0,0,.2)' }}
+        styles={{ header: { padding: '8px 12px' }, body: { padding: 0 } }}
+      >
+        {body}
+      </Drawer>
+    );
+  }
+
+  // Desktop inline bar
   return (
     <div
       style={{
@@ -80,44 +192,12 @@ const TimelinePanel: React.FC<TimelinePanelProps> = ({ year, onChange, min = 170
         boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
         width: 'calc(100vw - 40px)',
         display: 'flex',
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 16,
-        height: 64
+        flexDirection: 'column',
+        gap: 8
       }}
     >
-      <Text strong>Year:</Text>
-      <InputNumber
-        min={min}
-        max={max}
-        value={year ?? undefined}
-        onChange={(value) => {
-          if (typeof value === 'number') {
-            setPlaybackYear(null);
-            onChange(value);
-          }
-        }}
-        style={{ width: 100 }}
-      />
-      <Button onClick={() => shiftWindow('left')}>{'←'}</Button>
-      <Slider
-        min={windowStart}
-        max={windowEnd}
-        step={1}
-        value={year ?? windowStart}
-        onChange={(value) => {
-          setPlaybackYear(null);
-          onChange(value);
-        }}
-        marks={marks}
-        style={{ flex: 1 }}
-      />
-      <Button onClick={() => shiftWindow('right')}>{'→'}</Button>
-      <Button onClick={() => {
-        setIsPlaying(false);
-        onChange(null);
-      }}>Clear</Button>
-      <Button onClick={togglePlay}>{isPlaying ? 'Pause' : 'Play'}</Button>
+      {Controls}
+      {SliderEl}
     </div>
   );
 };

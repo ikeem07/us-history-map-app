@@ -2,7 +2,7 @@ import React from 'react';
 import { Map as LibreMap, MapRef } from 'react-map-gl/maplibre';
 import { Helmet } from 'react-helmet';
 import { Button } from 'antd';
-import { FilterOutlined } from '@ant-design/icons';
+import { ClockCircleOutlined } from '@ant-design/icons';
 
 import events from '../data/historical-events.json';
 import type { HistoricalEvent } from '../types/historical-event';
@@ -36,6 +36,7 @@ const MapView: React.FC = () => {
   const [selectedPeople, setSelectedPeople] = React.useState<string[]>([]);
   const [legendCollapsed, setLegendCollapsed] = React.useState(false);
   const [drawerOpen, setDrawerOpen] = React.useState(false);
+  const [timelineOpen, setTimelineOpen] = React.useState(false);
 
   // popups
   const [hoverInfo, setHoverInfo] = React.useState<{ lngLat: [number, number]; reason: string } | null>(null);
@@ -58,6 +59,13 @@ const MapView: React.FC = () => {
   const locationPoints = useLocationPoints(visibleEvents, selectedEvent);
   const connectionData = useConnectionData(selectedEvent, visibleEvents);
 
+  const handleYear = (y: number | null) => { setActiveYear(y); if (isMobile) setTimelineOpen(false); };
+
+  React.useEffect(() => {
+    if (activeYear == null) localStorage.removeItem('activeYear');
+    else localStorage.setItem('activeYear', String(activeYear));
+  }, [activeYear]);
+
   return (
     <>
       <Helmet>
@@ -68,10 +76,12 @@ const MapView: React.FC = () => {
       {isMobile && (
         <Button
           type="primary"
-          shape="circle"
-          icon={<FilterOutlined />}
+          icon={<ClockCircleOutlined />}
+          onClick={() => setTimelineOpen(true)}
           style={{ position: 'absolute', left: 12, top: 12, zIndex: 1200 }}
-        />
+        >
+          Timeline
+        </Button>
       )}
 
       <FilterSidebar
@@ -201,7 +211,27 @@ const MapView: React.FC = () => {
         />
       </LibreMap>
 
-      <TimelinePanel year={activeYear} onChange={setActiveYear} min={1700} max={2000} />
+      {/* Timeline: drawer on mobile, inline on desktop */}
+      {isMobile ? (
+        <TimelinePanel
+          variant="drawer"  
+          open={timelineOpen}
+          onClose={() => setTimelineOpen(false)}
+          year={activeYear}
+          onChange={handleYear}
+          min={1700}
+          max={2000}
+          heightVh={42}
+        />
+      ) : (
+        <TimelinePanel
+          variant="inline"
+          year={activeYear}
+          onChange={setActiveYear}
+          min={1700}
+          max={2000}
+        />
+      )}
     </>
   );
 };
