@@ -14,6 +14,10 @@ export type FilterSidebarProps = {
   onChangeTags: (tags: string[]) => void;
   onChangePeople: (people: string[]) => void;
   onClear: () => void;
+  // for mobile view
+  isMobile?: boolean;
+  mobileOpen?: boolean;
+  onMobileClose?: () => void;
 };
 
 const FilterSidebar: React.FC<FilterSidebarProps> = ({

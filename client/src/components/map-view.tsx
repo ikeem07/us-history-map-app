@@ -1,7 +1,8 @@
 import React from 'react';
 import { Map as LibreMap, MapRef } from 'react-map-gl/maplibre';
 import { Helmet } from 'react-helmet';
-import { Typography } from 'antd';
+import { Button } from 'antd';
+import { FilterOutlined } from '@ant-design/icons';
 
 import events from '../data/historical-events.json';
 import type { HistoricalEvent } from '../types/historical-event';
@@ -13,6 +14,7 @@ import MapLegend from './map-legend';
 import { useVisibleEvents } from '../hooks/useVisibleEvents';
 import { useLocationPoints } from '../hooks/useLocationPoints';
 import { useConnectionData } from '../hooks/useConnectionData';
+import { useIsMobile } from '../hooks/useIsMobile';
 
 import EventsSource from './map/EventsSource';
 import ConnectionsSource from './map/ConnectionsSource';
@@ -33,6 +35,7 @@ const MapView: React.FC = () => {
   const [selectedTags, setSelectedTags] = React.useState<string[]>([]);
   const [selectedPeople, setSelectedPeople] = React.useState<string[]>([]);
   const [legendCollapsed, setLegendCollapsed] = React.useState(false);
+  const [drawerOpen, setDrawerOpen] = React.useState(false);
 
   // popups
   const [hoverInfo, setHoverInfo] = React.useState<{ lngLat: [number, number]; reason: string } | null>(null);
@@ -42,6 +45,7 @@ const MapView: React.FC = () => {
   });
 
   const mapRef = React.useRef<MapRef | null>(null);
+  const isMobile = useIsMobile();
 
   // Derived data
   const visibleEvents = useVisibleEvents({
@@ -61,6 +65,15 @@ const MapView: React.FC = () => {
         <meta name="description" content="Explore historical events on an interactive map." />
       </Helmet>
 
+      {isMobile && (
+        <Button
+          type="primary"
+          shape="circle"
+          icon={<FilterOutlined />}
+          style={{ position: 'absolute', left: 12, top: 12, zIndex: 1200 }}
+        />
+      )}
+
       <FilterSidebar
         selectedTags={selectedTags}
         selectedPeople={selectedPeople}
@@ -72,6 +85,10 @@ const MapView: React.FC = () => {
           setSelectedTags([]);
           setSelectedPeople([]);
         }}
+        // for mobile view
+        isMobile={isMobile}
+        mobileOpen={isMobile ? drawerOpen : undefined}
+        onMobileClose={isMobile ? () => setDrawerOpen(false) : undefined}
       />
 
       <MapLegend
@@ -168,7 +185,7 @@ const MapView: React.FC = () => {
           }
         }}
       >
-        <EventsSource data={locationPoints} />
+        <EventsSource data={locationPoints} mobile={isMobile}/>
         <ConnectionsSource data={connectionData} />
 
         {/* Popups */}
