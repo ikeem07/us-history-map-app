@@ -35,7 +35,6 @@ const MapView: React.FC = () => {
   const [selectedTags, setSelectedTags] = React.useState<string[]>([]);
   const [selectedPeople, setSelectedPeople] = React.useState<string[]>([]);
   const [legendCollapsed, setLegendCollapsed] = React.useState(false);
-  const [drawerOpen, setDrawerOpen] = React.useState(false);
   const [timelineOpen, setTimelineOpen] = React.useState(false);
   const [showFilters, setShowFilters] = React.useState(false);
 
@@ -47,9 +46,8 @@ const MapView: React.FC = () => {
   });
 
   const mapRef = React.useRef<MapRef | null>(null);
-  const isMobile = useIsMobile();
-  const isTouch = typeof window !== 'undefined' && 'ontouchstart' in window;
-  const isNarrow = typeof window !== 'undefined' && window.matchMedia('(max-width: 768px)').matches;
+  const isMobile = useIsMobile('(max-width: 768px)');
+  const isTouch = typeof window !== 'undefined' && ( 'ontouchstart' in window || navigator.maxTouchPoints > 0 );
 
   // Derived data
   const visibleEvents = useVisibleEvents({
@@ -69,6 +67,11 @@ const MapView: React.FC = () => {
     else localStorage.setItem('activeYear', String(activeYear));
   }, [activeYear]);
 
+  React.useEffect(() => {
+    const saved = localStorage.getItem('activeYear');
+    if (saved) setActiveYear(Number(saved));
+  }, []);
+
   return (
     <>
       <Helmet>
@@ -87,7 +90,7 @@ const MapView: React.FC = () => {
         </Button>
       )}
 
-      {isNarrow && (
+      {isMobile && (
         <Button
           type="primary"
           onClick={() => setShowFilters(true)}
@@ -97,12 +100,13 @@ const MapView: React.FC = () => {
         </Button>
       )}
 
-      {isNarrow ? (
+      {isMobile ? (
         <Drawer
           placement='left'
           open={showFilters}
           onClose={() => setShowFilters(false)}
           width="85vw"
+          getContainer={false}
           styles={{ body: { padding: 12 } }}
         >
           <FilterSidebar
@@ -159,6 +163,9 @@ const MapView: React.FC = () => {
           minHeight: '100vh', // fallback
         }}
         interactiveLayerIds={[...INTERACTIVE_LAYERS]}
+        dragRotate={false}
+        touchPitch={false}
+        touchZoomRotate={{ around: 'center' }}
         onMouseMove={(e) => {
           if (isTouch) return; // Disable hover on touch devices
           const features = e.features ?? [];
@@ -217,8 +224,8 @@ const MapView: React.FC = () => {
               const reason = (f.properties && (f.properties as any).reason) as string | undefined;
               if (reason) {
                 setHoverInfo({ lngLat: e.lngLat.toArray() as [number, number], reason });
+                return;
               }
-              return;
             }
           }
 
