@@ -26,7 +26,7 @@ export function SelectedEventPopup({
       closeButton={true}
       closeOnClick={false}
       anchor="top"
-      style={{ minWidth: 350 }}
+      style={{ width: 'min(360px, calc(100vw - 40px))' }}
     >
       <div style={{ minWidth: '100%' }}>
         <Card size="small" style={{ boxShadow: 'none', margin: 0 }} className="custom-ant-card">
@@ -55,7 +55,7 @@ export function HoverReasonPopup({
 }) {
   if (!lngLat || !reason) return null;
   return (
-    <Popup longitude={lngLat[0]} latitude={lngLat[1]} closeButton={false} closeOnClick={false} offset={10} anchor="top" style={{ minWidth: 200 }}>
+    <Popup longitude={lngLat[0]} latitude={lngLat[1]} closeButton={false} closeOnClick={false} offset={10} anchor="top" style={{ maxWidth: 'min(300px, calc(100vw - 40px))' }}>
       <Typography.Text>{reason}</Typography.Text>
     </Popup>
   );

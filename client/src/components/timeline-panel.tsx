@@ -31,6 +31,8 @@ const TimelinePanel: React.FC<TimelinePanelProps> = ({
   const [playbackYear, setPlaybackYear] = useState<number | null>(null);
   const playRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  const isNarrow = typeof window !== 'undefined' && window.matchMedia('(max-width: 768px)').matches;
+
   const shiftWindow = (direction: 'left' | 'right') => {
     const shiftAmount = 25;
     if (direction === 'left') {
@@ -182,18 +184,19 @@ const TimelinePanel: React.FC<TimelinePanelProps> = ({
   return (
     <div
       style={{
-        position: 'absolute',
-        bottom: 20,
-        left: 20,
+        position: 'fixed',
+        bottom: `calc(env(safe-area-inset-bottom, 0) + 12px)`,
+        left: 12,
+        right: 12,
         zIndex: 1000,
         background: 'white',
-        padding: '8px 12px',
+        padding: isNarrow ? '10px 12px' : '8px 12px',
         borderRadius: 8,
         boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
-        width: 'calc(100vw - 40px)',
         display: 'flex',
-        flexDirection: 'column',
-        gap: 8
+        flexDirection: isNarrow ? 'column' : 'row',
+        alignItems: isNarrow ? 'stretch' : 'center',
+        gap: isNarrow ? 10 : 16
       }}
     >
       {Controls}
