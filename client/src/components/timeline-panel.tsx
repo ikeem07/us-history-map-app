@@ -184,20 +184,71 @@ const TimelinePanel: React.FC<TimelinePanelProps> = ({
       style={{
         position: 'absolute',
         bottom: 20,
-        left: 20,
+        left: 12,
+        right: 12,
         zIndex: 1000,
         background: 'white',
         padding: '8px 12px',
         borderRadius: 8,
         boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
-        width: 'calc(100vw - 40px)',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 8
       }}
     >
-      {Controls}
-      {SliderEl}
+      {/* 3-column flex row */}
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 12,
+          width: '100%',
+          minWidth: 0 // IMPORTANT so the slider can shrink/grow
+        }}
+      >
+        {/* LEFT: year + arrows */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: '0 0 auto' }}>
+          <Typography.Text strong>Year:</Typography.Text>
+          <InputNumber
+            min={min}
+            max={max}
+            value={year ?? undefined}
+            onChange={(value) => {
+              if (typeof value === 'number') onChange(value);
+            }}
+            style={{ width: 100 }}
+            size="middle"
+          />
+          <Button onClick={() => shiftWindow('left')}>{'←'}</Button>
+          <Button onClick={() => shiftWindow('right')}>{'→'}</Button>
+        </div>
+
+        {/* MIDDLE: slider (flexes) */}
+        <div style={{ flex: '1 1 auto', minWidth: 0, padding: '0px 8px 15px 8px' }}>
+          <Slider
+            min={windowStart}
+            max={windowEnd}
+            step={1}
+            value={year ?? windowStart}
+            onChange={(v) => onChange(v as number)}
+            marks={makeMarks(true)}
+            tooltip={{ open: false }}
+            style={{ margin: '0' }}
+          />
+        </div>
+
+        {/* RIGHT: actions */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: '0 0 auto' }}>
+          <Button
+            onClick={() => {
+              setIsPlaying(false);
+              onChange(null);
+            }}
+          >
+            Clear
+          </Button>
+          <Button onClick={togglePlay} type="primary">
+            {isPlaying ? 'Pause' : 'Play'}
+          </Button>
+        </div>
+      </div>
     </div>
   );
 };
