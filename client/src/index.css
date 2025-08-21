@@ -106,3 +106,7 @@ button:focus-visible {
 .maplibregl-canvas-container.maplibregl-interactive:hover {
   cursor: inherit;
 }
+
+/* For mobile */
+html, body, #root { height: 100%; }
+.map-root { padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom); }

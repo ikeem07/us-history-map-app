@@ -1,7 +1,8 @@
 import React from 'react';
 import { Map as LibreMap, MapRef } from 'react-map-gl/maplibre';
 import { Helmet } from 'react-helmet';
-import { Typography } from 'antd';
+import { Drawer, Button } from 'antd';
+import { ClockCircleOutlined } from '@ant-design/icons';
 
 import events from '../data/historical-events.json';
 import type { HistoricalEvent } from '../types/historical-event';
@@ -13,6 +14,7 @@ import MapLegend from './map-legend';
 import { useVisibleEvents } from '../hooks/useVisibleEvents';
 import { useLocationPoints } from '../hooks/useLocationPoints';
 import { useConnectionData } from '../hooks/useConnectionData';
+import { useIsMobile } from '../hooks/useIsMobile';
 
 import EventsSource from './map/EventsSource';
 import ConnectionsSource from './map/ConnectionsSource';
@@ -33,6 +35,8 @@ const MapView: React.FC = () => {
   const [selectedTags, setSelectedTags] = React.useState<string[]>([]);
   const [selectedPeople, setSelectedPeople] = React.useState<string[]>([]);
   const [legendCollapsed, setLegendCollapsed] = React.useState(false);
+  const [timelineOpen, setTimelineOpen] = React.useState(false);
+  const [showFilters, setShowFilters] = React.useState(false);
 
   // popups
   const [hoverInfo, setHoverInfo] = React.useState<{ lngLat: [number, number]; reason: string } | null>(null);
@@ -42,6 +46,8 @@ const MapView: React.FC = () => {
   });
 
   const mapRef = React.useRef<MapRef | null>(null);
+  const isMobile = useIsMobile('(max-width: 768px)');
+  const isTouch = typeof window !== 'undefined' && ( 'ontouchstart' in window || navigator.maxTouchPoints > 0 );
 
   // Derived data
   const visibleEvents = useVisibleEvents({
@@ -54,6 +60,18 @@ const MapView: React.FC = () => {
   const locationPoints = useLocationPoints(visibleEvents, selectedEvent);
   const connectionData = useConnectionData(selectedEvent, visibleEvents);
 
+  const handleYear = (y: number | null) => { setActiveYear(y); if (isMobile) setTimelineOpen(false); };
+
+  React.useEffect(() => {
+    if (activeYear == null) localStorage.removeItem('activeYear');
+    else localStorage.setItem('activeYear', String(activeYear));
+  }, [activeYear]);
+
+  React.useEffect(() => {
+    const saved = localStorage.getItem('activeYear');
+    if (saved) setActiveYear(Number(saved));
+  }, []);
+
   return (
     <>
       <Helmet>
@@ -61,18 +79,63 @@ const MapView: React.FC = () => {
         <meta name="description" content="Explore historical events on an interactive map." />
       </Helmet>
 
-      <FilterSidebar
-        selectedTags={selectedTags}
-        selectedPeople={selectedPeople}
-        allTags={Array.from(new Set(historicalEvents.flatMap((e) => e.tags || []))).sort()}
-        allPeople={Array.from(new Set(historicalEvents.flatMap((e) => e.people || []))).sort()}
-        onChangeTags={setSelectedTags}
-        onChangePeople={setSelectedPeople}
-        onClear={() => {
-          setSelectedTags([]);
-          setSelectedPeople([]);
-        }}
-      />
+      {isMobile && (
+        <Button
+          type="primary"
+          icon={<ClockCircleOutlined />}
+          onClick={() => setTimelineOpen(true)}
+          style={{ position: 'absolute', left: 12, top: 12, zIndex: 1200 }}
+        >
+          Timeline
+        </Button>
+      )}
+
+      {isMobile && (
+        <Button
+          type="primary"
+          onClick={() => setShowFilters(true)}
+          style={{ position: 'fixed', top: 16, right: 16, zIndex: 1100 }}
+        >
+          Filters
+        </Button>
+      )}
+
+      {isMobile ? (
+        <Drawer
+          placement='left'
+          open={showFilters}
+          onClose={() => setShowFilters(false)}
+          width="85vw"
+          getContainer={false}
+          styles={{ body: { padding: 12 } }}
+        >
+          <FilterSidebar
+            selectedTags={selectedTags}
+            selectedPeople={selectedPeople}
+            allTags={Array.from(new Set(historicalEvents.flatMap((e) => e.tags || []))).sort()}
+            allPeople={Array.from(new Set(historicalEvents.flatMap((e) => e.people || []))).sort()}
+            onChangeTags={setSelectedTags}
+            onChangePeople={setSelectedPeople}
+            onClear={() => {
+              setSelectedTags([]);
+              setSelectedPeople([]);
+            }}
+          />
+        </Drawer>
+      ) : (
+        <FilterSidebar
+          selectedTags={selectedTags}
+          selectedPeople={selectedPeople}
+          allTags={Array.from(new Set(historicalEvents.flatMap((e) => e.tags || []))).sort()}
+          allPeople={Array.from(new Set(historicalEvents.flatMap((e) => e.people || []))).sort()}
+          onChangeTags={setSelectedTags}
+          onChangePeople={setSelectedPeople}
+          onClear={() => {
+            setSelectedTags([]);
+            setSelectedPeople([]);
+          }}
+        />
+      )}
 
       <MapLegend
         collapsed={legendCollapsed}
@@ -94,9 +157,17 @@ const MapView: React.FC = () => {
         mapLib={import('maplibre-gl')}
         mapStyle="https://basemaps.cartocdn.com/gl/positron-gl-style/style.json"
         initialViewState={{ latitude: 39.8283, longitude: -98.5795, zoom: 3.5 }}
-        style={{ width: '100%', height: '100vh' }}
+        style={{ 
+          width: '100%',
+          height: '100dvh',   // modern mobile browsers
+          minHeight: '100vh', // fallback
+        }}
         interactiveLayerIds={[...INTERACTIVE_LAYERS]}
+        dragRotate={false}
+        touchPitch={false}
+        touchZoomRotate={{ around: 'center' }}
         onMouseMove={(e) => {
+          if (isTouch) return; // Disable hover on touch devices
           const features = e.features ?? [];
           const hovered = features.find((f) => f.layer.id === 'line-hover-target');
           if (hovered && (hovered as any).properties?.reason) {
@@ -145,7 +216,20 @@ const MapView: React.FC = () => {
             return;
           }
 
-          // 2) Unclustered point -> single or multi popup
+          // 2) Connection line tap (mobile)
+          if (isTouch) {
+            const lineHits = map.queryRenderedFeatures(bbox as any, { layers: ['line-hover-target'] }) as any[];
+            if (lineHits.length) {
+              const f = lineHits[0];
+              const reason = (f.properties && (f.properties as any).reason) as string | undefined;
+              if (reason) {
+                setHoverInfo({ lngLat: e.lngLat.toArray() as [number, number], reason });
+                return;
+              }
+            }
+          }
+
+          // 3) Unclustered point -> single or multi popup
           const pointHits = map.queryRenderedFeatures(bbox as any, { layers: ['unclustered-point-hit'] }) as any[];
           if (pointHits.length) {
             const f = pointHits[0];
@@ -166,9 +250,14 @@ const MapView: React.FC = () => {
             }
             return;
           }
+
+          // 4) Tap elsewhere to dismiss the line "reason" popup on mobile
+          if (isTouch && hoverInfo) {
+            setHoverInfo(null);
+          }
         }}
       >
-        <EventsSource data={locationPoints} />
+        <EventsSource data={locationPoints} mobile={isMobile}/>
         <ConnectionsSource data={connectionData} />
 
         {/* Popups */}
@@ -184,7 +273,27 @@ const MapView: React.FC = () => {
         />
       </LibreMap>
 
-      <TimelinePanel year={activeYear} onChange={setActiveYear} min={1700} max={2000} />
+      {/* Timeline: drawer on mobile, inline on desktop */}
+      {isMobile ? (
+        <TimelinePanel
+          variant="drawer"  
+          open={timelineOpen}
+          onClose={() => setTimelineOpen(false)}
+          year={activeYear}
+          onChange={handleYear}
+          min={1700}
+          max={2000}
+          heightVh={42}
+        />
+      ) : (
+        <TimelinePanel
+          variant="inline"
+          year={activeYear}
+          onChange={setActiveYear}
+          min={1700}
+          max={2000}
+        />
+      )}
     </>
   );
 };

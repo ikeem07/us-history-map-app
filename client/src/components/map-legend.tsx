@@ -6,6 +6,7 @@ import {
   COLOR_LINE, COLOR_LABEL, COLOR_CLUSTER_LOW, COLOR_CLUSTER_MID, COLOR_CLUSTER_HIGH,
   CLUSTER_STEP_1, CLUSTER_STEP_2
 } from '../constants/map';
+import { useIsMobile } from '../hooks/useIsMobile';
 
 const { Text } = Typography;
 
@@ -27,6 +28,7 @@ export type MapLegendProps = {
   onToggle: () => void;
   colors?: typeof DEFAULT_COLORS;
   initialPosition?: { top?: number; right?: number; left?: number; bottom?: number };
+  autoCollapseOnMobile?: boolean;
 }
 
 const circle = (color: string, size = 12, extra?: React.CSSProperties): React.CSSProperties => ({
@@ -53,7 +55,8 @@ const MapLegend: React.FC<MapLegendProps> = ({
   collapsed, 
   onToggle, 
   colors = DEFAULT_COLORS, 
-  initialPosition 
+  initialPosition,
+  autoCollapseOnMobile 
 }) => {
   // simple draggable position managed locally
   const containerRef = React.useRef<HTMLDivElement | null>(null);
@@ -66,6 +69,8 @@ const MapLegend: React.FC<MapLegendProps> = ({
   });
   const [dragging, setDragging] = React.useState(false);
   const dragStartRef = React.useRef<{ x: number; y: number } | null>(null);
+
+  const isMobile = useIsMobile();
 
   // Insure legend stays within viewport on screen resize
   const clampToViewport = React.useCallback(() => {
@@ -97,6 +102,10 @@ const MapLegend: React.FC<MapLegendProps> = ({
       clampToViewport();
     }
   }, []);
+
+  React.useEffect(() => {
+    if (isMobile && autoCollapseOnMobile) onToggle?.()
+  }, [isMobile])
 
   const onMouseDown = (e: React.MouseEvent) => {
     setDragging(true);
@@ -188,15 +197,15 @@ const MapLegend: React.FC<MapLegendProps> = ({
             <span>Map Legend</span>
             <div style={{ flex: 1 }} />
             <Button
-              size='small'
+              size={isMobile ? 'middle' : 'small'}
               type="text"
               title="Drag"
               icon={<DragOutlined />}
               onMouseDown={onMouseDown}
-              style={{ cursor: 'grab' }}
+              style={{ cursor: 'grab', padding: isMobile ? 6 : 0 }}
             />
             <Button
-              size='small'
+              size={isMobile ? 'middle' : 'small'}
               type="text"
               onClick={onToggle}
               icon={collapsed ? <PlusOutlined /> : <MinusOutlined />}
