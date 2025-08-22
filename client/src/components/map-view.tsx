@@ -83,7 +83,7 @@ const MapView: React.FC = () => {
         <Button
           type="primary"
           icon={<ClockCircleOutlined />}
-          onClick={() => setTimelineOpen(true)}
+          onClick={() => setTimelineOpen((open) => !open)}
           style={{ position: 'fixed', right: 12, bottom: 12, zIndex: 1200 }}
         >
           Timeline
@@ -107,6 +107,7 @@ const MapView: React.FC = () => {
           onClose={() => setShowFilters(false)}
           width="85vw"
           getContainer={false}
+          zIndex={2000}
           maskClosable={true}
           title="Filters"
           styles={{ header: { padding: '8px 12px' }, body: { padding: 12 } }}
