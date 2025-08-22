@@ -233,6 +233,11 @@ const TimelinePanel: React.FC<TimelinePanelProps> = ({
             marks={makeMarks(true)}
             tooltip={{ open: false }}
             style={{ margin: '0' }}
+            styles={{
+              rail: { height: 6 },
+              track: { height: 6 },
+              handle: { width: 16, height: 16, marginTop: -6 },
+            }}
           />
         </div>
 
