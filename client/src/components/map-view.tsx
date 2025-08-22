@@ -94,7 +94,7 @@ const MapView: React.FC = () => {
         <Button
           type="primary"
           onClick={() => setShowFilters((open) => !open)}
-          style={{ position: 'fixed', top: 12, right: 12, zIndex: 1200 }}
+          style={{ position: 'fixed', top: 12, right: 12, zIndex: 2200 }}
         >
           Filters
         </Button>
