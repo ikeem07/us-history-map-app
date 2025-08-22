@@ -79,12 +79,12 @@ const MapView: React.FC = () => {
         <meta name="description" content="Explore historical events on an interactive map." />
       </Helmet>
 
-      {isMobile && (
+      {isMobile && !showFilters && (
         <Button
           type="primary"
           icon={<ClockCircleOutlined />}
           onClick={() => setTimelineOpen(true)}
-          style={{ position: 'absolute', left: 12, top: 12, zIndex: 1200 }}
+          style={{ position: 'fixed', right: 12, bottom: 12, zIndex: 1200 }}
         >
           Timeline
         </Button>
