@@ -88,6 +88,48 @@ const MapLegend: React.FC<MapLegendProps> = ({
     }));
   }, []);
 
+  const onPointerDown = (e: React.PointerEvent) => {
+    (e.target as Element).setPointerCapture?.(e.pointerId);
+    setDragging(true);
+    dragStartRef.current = { x: e.clientX - pos.x, y: e.clientY - pos.y };
+  };
+
+  const onPointerMove = React.useCallback((e: PointerEvent) => {
+    if (!dragging || !dragStartRef.current) return;
+    e.preventDefault();
+    const nx = e.clientX - dragStartRef.current.x;
+    const ny = e.clientY - dragStartRef.current.y;
+
+    const node = containerRef.current;
+    const w = node?.offsetWidth ?? 0;
+    const h = node?.offsetHeight ?? 0;
+    const maxX = Math.max(DRAG_VIEWPORT_MARGIN, window.innerWidth - w - DRAG_VIEWPORT_MARGIN);
+    const maxY = Math.max(DRAG_VIEWPORT_MARGIN, window.innerHeight - h - DRAG_VIEWPORT_MARGIN);
+  
+    setPos({
+      x: Math.max(DRAG_VIEWPORT_MARGIN, Math.min(nx, maxX)),
+      y: Math.max(DRAG_VIEWPORT_MARGIN, Math.min(ny, maxY))
+    })
+  }, [dragging, pos.x, pos.y]);
+
+  const onPointerUp = React.useCallback(() => {
+    if (!dragging) return;
+    setDragging(false);
+    dragStartRef.current = null;
+    document.body.style.userSelect = '';
+    const node = containerRef.current;
+    if (node) {
+      const w = node.offsetWidth;
+      const h = node.offsetHeight;
+      const maxX = Math.max(DRAG_VIEWPORT_MARGIN, window.innerWidth - w - DRAG_VIEWPORT_MARGIN);
+      const maxY = Math.max(DRAG_VIEWPORT_MARGIN, window.innerHeight - h - DRAG_VIEWPORT_MARGIN);
+      setPos((p) => ({
+        x: Math.max(DRAG_VIEWPORT_MARGIN, Math.min(p.x, maxX)),
+        y: Math.max(DRAG_VIEWPORT_MARGIN, Math.min(p.y, maxY))
+      }));
+    }
+  }, [dragging]);
+
   // Convert initial “right-based” x to absolute left after first render,
   // then clamp to viewport.
   React.useEffect(() => {
@@ -107,47 +149,17 @@ const MapLegend: React.FC<MapLegendProps> = ({
     if (isMobile && autoCollapseOnMobile) onToggle?.()
   }, [isMobile])
 
-  const onMouseDown = (e: React.MouseEvent) => {
-    setDragging(true);
-    dragStartRef.current = { x: e.clientX - pos.x, y: e.clientY - pos.y };
-    // avoid text selection with dragging
-    document.body.style.userSelect = 'none';
-  }
-
-  const onMouseMove = React.useCallback((e: MouseEvent) => {
-    if (!dragging || !dragStartRef.current) return;
-    const nx = e.clientX - dragStartRef.current.x;
-    const ny = e.clientY - dragStartRef.current.y;
-
-    // Clamp to viewport while dragging
-    const node = containerRef.current;
-    const w = node?.offsetWidth ?? 0;
-    const h = node?.offsetHeight ?? 0;
-    const maxX = Math.max(DRAG_VIEWPORT_MARGIN, window.innerWidth - w - DRAG_VIEWPORT_MARGIN);
-    const maxY = Math.max(DRAG_VIEWPORT_MARGIN, window.innerHeight - h - DRAG_VIEWPORT_MARGIN);
-
-    const clampedX = Math.max(DRAG_VIEWPORT_MARGIN, Math.min(nx, maxX));
-    const clampedY = Math.max(DRAG_VIEWPORT_MARGIN, Math.min(ny, maxY));
-
-    setPos({ x: clampedX, y: clampedY });
-  }, [dragging]);
-
-  const onMouseUp = React.useCallback(() => {
-    if (!dragging) return;
-    setDragging(false);
-    dragStartRef.current = null;
-    document.body.style.userSelect = '';
-    clampToViewport();
-  }, [dragging, clampToViewport]);
-
   React.useEffect(() => {
-    window.addEventListener('mousemove', onMouseMove);
-    window.addEventListener('mouseup', onMouseUp);
+    const move = (ev: PointerEvent) => onPointerMove(ev);
+    const up = () => onPointerUp();
+
+    window.addEventListener('pointermove', move, { passive: false });
+    window.addEventListener('pointerup', up, { passive: true });
     return () => {
-      window.removeEventListener('mousemove', onMouseMove);
-      window.removeEventListener('mouseup', onMouseUp);
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', up);
     };
-  }, [onMouseMove, onMouseUp]);
+  }, [onPointerMove, onPointerUp]);
 
   // Clamp on window resize (e.g., user resizes or rotates)
   React.useEffect(() => {
@@ -186,7 +198,8 @@ const MapLegend: React.FC<MapLegendProps> = ({
         left: pos.x,
         top: pos.y,
         zIndex: 1100,
-        cursor: dragging ? 'grabbing' : 'default'
+        cursor: dragging ? 'grabbing' : 'default',
+        touchAction: 'none',
       }}
     >
       <Card
@@ -201,8 +214,8 @@ const MapLegend: React.FC<MapLegendProps> = ({
               type="text"
               title="Drag"
               icon={<DragOutlined />}
-              onMouseDown={onMouseDown}
-              style={{ cursor: 'grab', padding: isMobile ? 6 : 0 }}
+              onPointerDown={onPointerDown}
+              style={{ cursor: 'grab', padding: isMobile ? 6 : 0, touchAction: 'none' }}
             />
             <Button
               size={isMobile ? 'middle' : 'small'}
