@@ -60,7 +60,7 @@ const MapView: React.FC = () => {
   const locationPoints = useLocationPoints(visibleEvents, selectedEvent);
   const connectionData = useConnectionData(selectedEvent, visibleEvents);
 
-  const handleYear = (y: number | null) => { setActiveYear(y); if (isMobile) setTimelineOpen(false); };
+  const handleYear = (y: number | null) => { setActiveYear(y); };
 
   React.useEffect(() => {
     if (activeYear == null) localStorage.removeItem('activeYear');
@@ -144,15 +144,16 @@ const MapView: React.FC = () => {
         collapsed={legendCollapsed}
         onToggle={() => setLegendCollapsed((s) => !s)}
         colors={{
-        clusterLow: COLOR_CLUSTER_LOW,
-        clusterMid: COLOR_CLUSTER_MID,
-        clusterHigh: COLOR_CLUSTER_HIGH,
-        eventDefault: COLOR_EVENT_DEFAULT,
-        eventPrimary: COLOR_EVENT_PRIMARY,
-        eventRelated: COLOR_EVENT_RELATED,
-        lineColor: COLOR_LINE,
-        labelColor: COLOR_LABEL,
-      }}
+          clusterLow: COLOR_CLUSTER_LOW,
+          clusterMid: COLOR_CLUSTER_MID,
+          clusterHigh: COLOR_CLUSTER_HIGH,
+          eventDefault: COLOR_EVENT_DEFAULT,
+          eventPrimary: COLOR_EVENT_PRIMARY,
+          eventRelated: COLOR_EVENT_RELATED,
+          lineColor: COLOR_LINE,
+          labelColor: COLOR_LABEL,
+        }}
+        initialPosition={isMobile ? { top: 56, right: 12 } : { top: 20, right: 20 }}
       />
 
       <LibreMap
