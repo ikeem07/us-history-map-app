@@ -93,7 +93,7 @@ const MapView: React.FC = () => {
       {isMobile && (
         <Button
           type="primary"
-          onClick={() => setShowFilters(true)}
+          onClick={() => setShowFilters((open) => !open)}
           style={{ position: 'fixed', top: 12, right: 12, zIndex: 1200 }}
         >
           Filters
