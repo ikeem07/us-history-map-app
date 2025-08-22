@@ -94,7 +94,7 @@ const MapView: React.FC = () => {
         <Button
           type="primary"
           onClick={() => setShowFilters(true)}
-          style={{ position: 'fixed', top: 16, right: 16, zIndex: 1100 }}
+          style={{ position: 'fixed', top: 12, right: 12, zIndex: 1200 }}
         >
           Filters
         </Button>
@@ -107,9 +107,12 @@ const MapView: React.FC = () => {
           onClose={() => setShowFilters(false)}
           width="85vw"
           getContainer={false}
-          styles={{ body: { padding: 12 } }}
+          maskClosable={true}
+          title="Filters"
+          styles={{ header: { padding: '8px 12px' }, body: { padding: 12 } }}
         >
           <FilterSidebar
+            embedded
             selectedTags={selectedTags}
             selectedPeople={selectedPeople}
             allTags={Array.from(new Set(historicalEvents.flatMap((e) => e.tags || []))).sort()}
