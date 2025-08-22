@@ -60,7 +60,7 @@ const MapView: React.FC = () => {
   const locationPoints = useLocationPoints(visibleEvents, selectedEvent);
   const connectionData = useConnectionData(selectedEvent, visibleEvents);
 
-  const handleYear = (y: number | null) => { setActiveYear(y); if (isMobile) setTimelineOpen(false); };
+  const handleYear = (y: number | null) => { setActiveYear(y); };
 
   React.useEffect(() => {
     if (activeYear == null) localStorage.removeItem('activeYear');
@@ -83,7 +83,7 @@ const MapView: React.FC = () => {
         <Button
           type="primary"
           icon={<ClockCircleOutlined />}
-          onClick={() => setTimelineOpen(true)}
+          onClick={() => setTimelineOpen((open) => !open)}
           style={{ position: 'fixed', right: 12, bottom: 12, zIndex: 1200 }}
         >
           Timeline
@@ -93,8 +93,8 @@ const MapView: React.FC = () => {
       {isMobile && (
         <Button
           type="primary"
-          onClick={() => setShowFilters(true)}
-          style={{ position: 'fixed', top: 12, right: 12, zIndex: 1200 }}
+          onClick={() => setShowFilters((open) => !open)}
+          style={{ position: 'fixed', top: 12, right: 12, zIndex: 2200 }}
         >
           Filters
         </Button>
@@ -107,6 +107,7 @@ const MapView: React.FC = () => {
           onClose={() => setShowFilters(false)}
           width="85vw"
           getContainer={false}
+          zIndex={2000}
           maskClosable={true}
           title="Filters"
           styles={{ header: { padding: '8px 12px' }, body: { padding: 12 } }}
@@ -144,15 +145,16 @@ const MapView: React.FC = () => {
         collapsed={legendCollapsed}
         onToggle={() => setLegendCollapsed((s) => !s)}
         colors={{
-        clusterLow: COLOR_CLUSTER_LOW,
-        clusterMid: COLOR_CLUSTER_MID,
-        clusterHigh: COLOR_CLUSTER_HIGH,
-        eventDefault: COLOR_EVENT_DEFAULT,
-        eventPrimary: COLOR_EVENT_PRIMARY,
-        eventRelated: COLOR_EVENT_RELATED,
-        lineColor: COLOR_LINE,
-        labelColor: COLOR_LABEL,
-      }}
+          clusterLow: COLOR_CLUSTER_LOW,
+          clusterMid: COLOR_CLUSTER_MID,
+          clusterHigh: COLOR_CLUSTER_HIGH,
+          eventDefault: COLOR_EVENT_DEFAULT,
+          eventPrimary: COLOR_EVENT_PRIMARY,
+          eventRelated: COLOR_EVENT_RELATED,
+          lineColor: COLOR_LINE,
+          labelColor: COLOR_LABEL,
+        }}
+        initialPosition={isMobile ? { top: 56, right: 12 } : { top: 20, right: 20 }}
       />
 
       <LibreMap
