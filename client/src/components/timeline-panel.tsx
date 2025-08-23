@@ -218,6 +218,17 @@ const TimelinePanel: React.FC<TimelinePanelProps> = ({
             style={{ width: 100 }}
             size="middle"
           />
+        </div>
+
+        <div
+          style={{
+            display: 'flex',
+            gap: 8,
+            flex: isNarrow ? '0 0 100%' : '0 0 auto',
+            justifyContent: isNarrow ? 'flex-start' : 'initial',
+            whiteSpace: 'nowrap'
+          }}
+        >
           <Button onClick={() => shiftWindow('left')}>{'←'}</Button>
           <Button onClick={() => shiftWindow('right')}>{'→'}</Button>
         </div>
