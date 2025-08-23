@@ -117,12 +117,22 @@ const TimelinePanel: React.FC<TimelinePanelProps> = ({
           style={{ width: 100 }}
           size={variant === 'drawer' ? 'large' : 'middle'}
         />
-        <Button onClick={() => shiftWindow('left')} size={variant === 'drawer' ? 'large' : 'middle'}>
-          {'←'}
-        </Button>
-        <Button onClick={() => shiftWindow('right')} size={variant === 'drawer' ? 'large' : 'middle'}>
-          {'→'}
-        </Button>
+
+        {/* Group so they wrap together */}
+        <div
+          style={{
+            display: 'flex',
+            gap: 8,
+            whiteSpace: 'nowrap'
+          }}
+        >
+          <Button onClick={() => shiftWindow('left')} size={variant === 'drawer' ? 'large' : 'middle'}>
+            {'←'}
+          </Button>
+          <Button onClick={() => shiftWindow('right')} size={variant === 'drawer' ? 'large' : 'middle'}>
+            {'→'}
+          </Button>
+        </div>
       </Space>
 
       <Space>
