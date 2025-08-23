@@ -29,9 +29,11 @@ const TimelinePanel: React.FC<TimelinePanelProps> = ({
   const windowEnd = Math.min(windowStart + visibleRange, max);
   const [isPlaying, setIsPlaying] = useState(false);
   const [playbackYear, setPlaybackYear] = useState<number | null>(null);
+  const [isNarrow, setIsNarrow] = useState(
+    typeof window !== 'undefined' && window.matchMedia('(max-width: 768px)').matches
+  );
+  
   const playRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  const isNarrow = typeof window !== 'undefined' && window.matchMedia('(max-width: 768px)').matches;
 
   const shiftWindow = (direction: 'left' | 'right') => {
     const shiftAmount = 25;
@@ -45,6 +47,13 @@ const TimelinePanel: React.FC<TimelinePanelProps> = ({
   const togglePlay = () => {
     setIsPlaying((prev) => !prev);
   };
+
+  useEffect(() => {
+    const mql = window.matchMedia('(max-width: 768px)');
+    const onChange = () => setIsNarrow(mql.matches);
+    mql.addEventListener('change', onChange);
+    return () => mql.removeEventListener('change', onChange);
+  }, []);
 
   useEffect(() => {
     if (isPlaying) {
@@ -190,9 +199,9 @@ const TimelinePanel: React.FC<TimelinePanelProps> = ({
         right: 12,
         zIndex: 1000,
         background: 'white',
-        padding: isNarrow ? '10px 12px' : '8px 12px',
+        padding: '8px 12px',
         borderRadius: 8,
-        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
+        boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
       }}
     >
       {/* 3-column flex row */}
@@ -202,11 +211,20 @@ const TimelinePanel: React.FC<TimelinePanelProps> = ({
           alignItems: 'center',
           gap: 12,
           width: '100%',
-          minWidth: 0 // IMPORTANT so the slider can shrink/grow
+          minWidth: 0, // IMPORTANT so the slider can shrink/grow
+          flexWrap: isNarrow ? 'wrap' : 'nowrap'
         }}
       >
         {/* LEFT: year + arrows */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: '0 0 auto' }}>
+        <div 
+          style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: 8, 
+            flex: '0 0 auto',
+            order: 1
+          }}
+        >
           <Typography.Text strong>Year:</Typography.Text>
           <InputNumber
             min={min}
@@ -220,13 +238,15 @@ const TimelinePanel: React.FC<TimelinePanelProps> = ({
           />
         </div>
 
+        {/* ARROWS: one unit; on narrow, they drop to their own full row */}
         <div
           style={{
             display: 'flex',
             gap: 8,
+            whiteSpace: 'nowrap',
             flex: isNarrow ? '0 0 100%' : '0 0 auto',
+            order: isNarrow ? 2 : 1,
             justifyContent: isNarrow ? 'flex-start' : 'initial',
-            whiteSpace: 'nowrap'
           }}
         >
           <Button onClick={() => shiftWindow('left')}>{'←'}</Button>
@@ -234,7 +254,14 @@ const TimelinePanel: React.FC<TimelinePanelProps> = ({
         </div>
 
         {/* MIDDLE: slider (flexes) */}
-        <div style={{ flex: '1 1 auto', minWidth: 0, padding: '0px 8px 15px 8px' }}>
+        <div 
+          style={{ 
+            flex: isNarrow ? '1 1 100%' : '1 1 auto', 
+            minWidth: 0, 
+            order: isNarrow ? 3 : 2,
+            padding: '0px 8px 15px 8px' 
+          }}
+        >
           <Slider
             min={windowStart}
             max={windowEnd}
@@ -253,7 +280,15 @@ const TimelinePanel: React.FC<TimelinePanelProps> = ({
         </div>
 
         {/* RIGHT: actions */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: '0 0 auto' }}>
+        <div 
+          style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: 8, 
+            flex: '0 0 auto',
+            order: isNarrow ? 4 : 3
+          }}
+        >
           <Button
             onClick={() => {
               setIsPlaying(false);
