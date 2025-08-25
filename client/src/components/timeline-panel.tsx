@@ -212,7 +212,7 @@ const TimelinePanel: React.FC<TimelinePanelProps> = ({
           gap: 12,
           width: '100%',
           minWidth: 0, // IMPORTANT so the slider can shrink/grow
-          flexWrap: 'wrap'
+          flexWrap: 'nowrap'
         }}
       >
         {/* LEFT: year + arrows */}
@@ -221,8 +221,7 @@ const TimelinePanel: React.FC<TimelinePanelProps> = ({
             display: 'flex', 
             alignItems: 'center', 
             gap: 8, 
-            flex: '0 0 auto',
-            order: 1
+            flex: '0 0 auto'
           }}
         >
           <Typography.Text strong>Year:</Typography.Text>
@@ -244,9 +243,7 @@ const TimelinePanel: React.FC<TimelinePanelProps> = ({
             display: 'flex',
             gap: 8,
             whiteSpace: 'nowrap',
-            minWidth: 'max-content',
-            flex: '0 0 auto',
-            order: 2
+            minWidth: 'max-content'
           }}
         >
           <Button onClick={() => shiftWindow('left')}>{'←'}</Button>
@@ -256,9 +253,8 @@ const TimelinePanel: React.FC<TimelinePanelProps> = ({
         {/* MIDDLE: slider (flexes) */}
         <div 
           style={{ 
-            flex: '1 1 100%', 
-            minWidth: 0, 
-            order: 3,
+            flex: '1 1 auto', 
+            minWidth: 0,
             padding: '0px 8px 15px 8px' 
           }}
         >
@@ -285,8 +281,7 @@ const TimelinePanel: React.FC<TimelinePanelProps> = ({
             display: 'flex', 
             alignItems: 'center', 
             gap: 8, 
-            flex: '0 0 auto',
-            order: 4
+            flex: '0 0 auto'
           }}
         >
           <Button
