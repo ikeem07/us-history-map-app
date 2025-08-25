@@ -191,8 +191,7 @@ const TimelinePanel: React.FC<TimelinePanelProps> = ({
         height={`${heightVh}vh`}
         title="Timeline"
         getContainer={false}               // render inside page to avoid z-index surprises
-        maskStyle={{ background: 'rgba(0,0,0,.2)' }}
-        styles={{ header: { padding: '8px 12px' }, body: { padding: 0 } }}
+        styles={{ header: { padding: '8px 12px' }, body: { padding: 0 }, mask: { background: 'rgba(0,0,0,.2)' } }}
       >
         {body}
       </Drawer>
