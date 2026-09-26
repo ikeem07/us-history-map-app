@@ -15,6 +15,7 @@
     "@ant-design/icons": "^6.0.0",
     "antd": "^5.26.5",
     "ga-4-react": "^0.1.281",
+    "geojson": "^0.5.0",
     "maplibre-gl": "^5.6.1",
     "react": "19.1.0",
     "react-dom": "19.1.0",
