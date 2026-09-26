@@ -1,8 +1,0 @@
-# pnpm-workspace.yaml
-packages:
-  - "client"
-  - "data-access"
-
-allowBuilds:
-  core-js: false
-  esbuild: false
