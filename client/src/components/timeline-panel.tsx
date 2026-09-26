@@ -3,7 +3,7 @@ import { Slider, InputNumber, Typography, Button, Drawer, Space } from 'antd';
 
 const { Text } = Typography;
 
-export type TimelinePanelProps = {
+type TimelinePanelProps = {
   year: number | null;
   min?: number;
   max?: number;

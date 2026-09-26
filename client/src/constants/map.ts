@@ -29,7 +29,7 @@ export const CLUSTER_RADIUS = 70;   // px
 export const CLUSTER_MAX_ZOOM = 13; // stop clustering beyond this zoom
 
 // Coordinate rounding to merge near-duplicates (≈ 1.1m at equator)
-export const GROUP_PRECISION = 5;
+const GROUP_PRECISION = 5;
 export const roundCoord = (n: number, p = GROUP_PRECISION) => {
   const k = Math.pow(10, p);
   return Math.round(n * k) / k;

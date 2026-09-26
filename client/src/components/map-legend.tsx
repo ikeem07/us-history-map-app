@@ -23,7 +23,7 @@ const DEFAULT_COLORS = {
 
 const DRAG_VIEWPORT_MARGIN = 8;
 
-export type MapLegendProps = {
+type MapLegendProps = {
   collapsed?: boolean;
   onToggle: () => void;
   colors?: typeof DEFAULT_COLORS;

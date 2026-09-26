@@ -1,4 +1,4 @@
-export type RelatedEvent = {
+type RelatedEvent = {
   id: string;
   reason: string; // Explanation of how this event is related to the main event
 }

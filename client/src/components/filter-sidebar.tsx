@@ -6,7 +6,7 @@ const { Title } = Typography;
 const { Option } = Select;
 const { Search } = Input;
 
-export type FilterSidebarProps = {
+type FilterSidebarProps = {
   embedded?: boolean; // if true, always visible on the side; if false, toggleable drawer
   selectedTags: string[];
   selectedPeople: string[];

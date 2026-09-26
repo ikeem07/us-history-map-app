@@ -5,7 +5,7 @@
   "type": "module",
   "packageManager": "pnpm@9.15.0",
   "scripts": {
-    "start": "vite",
+    "start": "knip && vite",
     "build": "tsc -b && vite build",
     "lint": "biome check .",
     "format": "biome format .",
@@ -29,6 +29,7 @@
     "@types/react-helmet": "^6.1.11",
     "@vitejs/plugin-react": "^4.6.0",
     "biome": "^0.3.3",
+    "knip": "^6.38.0",
     "typescript": "~5.8.3",
     "vite": "^7.0.4"
   }
